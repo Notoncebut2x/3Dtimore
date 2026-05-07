@@ -1,0 +1,104 @@
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-panel-bg text-white font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-panel-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-panel-muted;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: rgba(13, 17, 23, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(48, 54, 61, 0.8);
+    border-radius: 12px;
+  }
+
+  .glass-panel-light {
+    background: rgba(22, 27, 34, 0.80);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(48, 54, 61, 0.6);
+    border-radius: 10px;
+  }
+
+  .stat-card {
+    @apply glass-panel-light px-4 py-3 flex flex-col gap-0.5;
+  }
+
+  .stat-value {
+    @apply text-white font-semibold text-lg leading-tight tabular-nums;
+  }
+
+  .stat-label {
+    @apply text-panel-muted text-xs uppercase tracking-widest font-medium;
+  }
+
+  .detail-row {
+    @apply flex items-start justify-between gap-4 py-2.5 border-b border-panel-border/40 last:border-0;
+  }
+
+  .detail-label {
+    @apply text-panel-muted text-xs uppercase tracking-wider font-medium shrink-0 pt-0.5;
+  }
+
+  .detail-value {
+    @apply text-white text-sm text-right leading-snug;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .section-title {
+    @apply text-panel-muted text-xs uppercase tracking-widest font-semibold mb-3;
+  }
+
+  .score-bar {
+    @apply h-1.5 rounded-full overflow-hidden bg-panel-border;
+  }
+
+  .score-fill {
+    @apply h-full rounded-full transition-all duration-700;
+  }
+}
+
+/* MapLibre overrides */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  display: none;
+}
+
+.maplibregl-canvas {
+  outline: none;
+}
+
+/* Deck.gl tooltip */
+.deck-tooltip {
+  @apply glass-panel text-white text-sm px-3 py-2 pointer-events-none;
+  max-width: 220px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}

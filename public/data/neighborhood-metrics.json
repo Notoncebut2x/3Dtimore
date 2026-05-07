@@ -1,0 +1,589 @@
+{
+  "generated": "2026-05-05T23:18:33.083309+00:00",
+  "target": {
+    "blocklot": "1976 001",
+    "label": "1000 Hull St, Locust Point",
+    "lat": 39.2748,
+    "lon": -76.5921
+  },
+  "radii_mi": [
+    1,
+    5
+  ],
+  "metrics": {
+    "grocery_stores": {
+      "1mi": {
+        "count": 13,
+        "names": [
+          "7-Eleven",
+          "La Joya Morelense",
+          "Canton Market",
+          "Lorena Latino Market",
+          "Whole Foods Market",
+          "Cinco de Mayo Dos",
+          "Lucky Corner",
+          "Broadway Convenience Mart",
+          "Safeway",
+          "DiPasquale's Marketplace"
+        ]
+      },
+      "5mi": {
+        "count": 171,
+        "names": [
+          "7-Eleven",
+          "Quick Mart",
+          "SuperFresh",
+          "Save-A-Lot",
+          "Eddie's of Mount Vernon",
+          "R & R Convenient & Deli",
+          "La Joya Morelense",
+          "Jo's Grocery & Carryout",
+          "Quick Stop",
+          "Canton Market"
+        ]
+      }
+    },
+    "transit": {
+      "bus_stops": {
+        "1mi": 98,
+        "5mi": 2171
+      },
+      "rail_stops": {
+        "1mi": 12,
+        "5mi": 515
+      },
+      "bus_routes": [
+        "Bus Banner: Fort McHenry -> Inner Harbor",
+        "Bus Banner: Inner Harbor -> Fort McHenryc",
+        "Bus Purple: 33rd Street -> Federal Hill",
+        "Bus Purple: Federal Hill -> 33rd Street",
+        "Bus RD: Lutherville -> University of Maryland Transit Center",
+        "Bus RD: Towson Town Center -> University of Maryland Transit Center",
+        "Bus RD: University of Maryland Transit Center -> Lutherville",
+        "Bus RD: University of Maryland Transit Center -> Townson Town Center",
+        "Bus SV: Curtis Bay -> Johns Hopkins University",
+        "Bus SV: Curtis Bay -> Morgan State University",
+        "Bus SV: Johns Hopkins University -> Curtis Bay",
+        "Bus SV: Morgan State University -> Curtis Bay",
+        "Bus: Interfaith Center -> Peabody -> JHMI",
+        "Bus: JHMI -> Peabody -> Interfaith Center",
+        "Charm City Circulator Green Route",
+        "Charm City Circulator Orange Route",
+        "CityLink Blue: CMS to Johns Hopkins Bayview",
+        "CityLink Blue: Johns Hopkins Bayview to CMS",
+        "CityLink Blue: Johns Hopkins Bayview to Westgate",
+        "CityLink Blue: Westgate to Johns Hopkins Bayview",
+        "CityLink Brown: Overlea to University of Maryland Medical Center",
+        "CityLink Brown: University of Maryland Medical Center to Overlea",
+        "CityLink Brown: University of Maryland Medical Center to White Marsh Park & Ride",
+        "CityLink Gold: Berea to Walbrook Junction",
+        "CityLink Gold: Canton to Walbrook Junction",
+        "CityLink Gold: Walbrook Junction Canton",
+        "CityLink Gold: Walbrook Junction to Berea (Baltimore Cemetery)",
+        "CityLink Green: Inner Harbor",
+        "CityLink Green: Towson",
+        "CityLink Lime: Druid Hill Park to Northwest Hospital",
+        "CityLink Lime: Harbor East to Northwest Hospital",
+        "CityLink Lime: Northwest Hospital to Druid Hill Park",
+        "CityLink Lime: Northwest Hospital to Harbor East",
+        "CityLink Navy: Dundalk (Center Place)",
+        "CityLink Navy: Mondawmin Metro Station",
+        "CityLink Navy: Watersedge (Bullneck Road)",
+        "CityLink Orange: Essex (Fox Ridge)",
+        "CityLink Orange: West Baltimore",
+        "CityLink Pink: Cedonia",
+        "CityLink Pink: West Baltimore",
+        "CityLink Purple: Catonsville",
+        "CityLink Purple: Johns Hopkins Hospital",
+        "CityLink Purple: Paradise",
+        "CityLink Yellow: Beltway Business Community",
+        "CityLink Yellow: Mondawmin",
+        "CityLink Yellow: Riverview",
+        "CityLink Yellow: UMBC via Kaiser",
+        "Citylink Brown: White Marsh Park & Ride to University of Maryland Medical Center",
+        "Commuter Bus 210: Annapolis",
+        "Commuter Bus 210: Downtown Baltimore (from Annapolis)",
+        "Commuter Bus 210: Downtown Baltimore (from Kent Island)",
+        "Commuter Bus 210: Kent Island",
+        "Commuter Bus 215: Annapolis",
+        "Commuter Bus 215: Baltimore",
+        "Commuter Bus 310: Columbia",
+        "Commuter Bus 310: Downtown Baltimore",
+        "Commuter Bus 320: Columbia (trip 6)",
+        "Commuter Bus 320: Columbia (trip 7)",
+        "Commuter Bus 320: Columbia (trips 1,3,5)",
+        "Commuter Bus 320: Columbia (trips 2;4)",
+        "Commuter Bus 320: Downtown Baltimore (trips 8;10;12)",
+        "Commuter Bus 320: Downtown Baltimore (trips 9;11;13;14)",
+        "Commuter Bus 410: Churchville/Bel Air",
+        "Commuter Bus 410: Downtown Baltimore",
+        "Commuter Bus 411: Downtown Baltimore/Johns Hopkins Hospital (trip 1 via White Marsh)",
+        "Commuter Bus 411: Downtown Baltimore/Johns Hopkins Hospital (trips 2-5)",
+        "Commuter Bus 411: Hickory/Bel Air",
+        "Commuter Bus 420: Downtown Baltimore/Johns Hopkins Hospital",
+        "Commuter Bus 420: Havre de Grace (trip A via White Marsh)",
+        "Commuter Bus 420: Havre de Grace (trips 6-10)",
+        "Express Bus 103: Cromwell Bridge Road",
+        "Express Bus 103: Inner Harbor",
+        "Express Bus 104: Cromwell Bridge Road",
+        "Express Bus 104: Johns Hopkins Hospital",
+        "Express Bus 105: Cedonia",
+        "Express Bus 115: Paca Street",
+        "Express Bus 115: Perry Hall",
+        "Express Bus 120 (AM Reverse): White Marsh Park & Ride",
+        "Express Bus 120 (AM): Johns Hopkins Hospital",
+        "Express Bus 120 (PM Reverse): Johns Hopkins Hospital",
+        "Express Bus 120 (PM): White Marsh Park & Ride",
+        "Express Bus 150: Columbia",
+        "Express Bus 150: Downtown/Harbor East",
+        "Express Bus 160 (AM): Johns Hopkins Hospital",
+        "Express Bus 160 (PM): Fox Ridge",
+        "Express Bus 160 (PM): Whispering Woods",
+        "Express BusLink 105: Downtown",
+        "Express BusLink 154: Carney",
+        "Express BusLink 154: Goucher & Taylor",
+        "Express BusLink 154: State Center",
+        "Flixbus 2601: New York City => Richmond",
+        "Flixbus 2601: New York City => Rosslyn",
+        "Flixbus 2601: Richmond => New York City",
+        "Flixbus 2601: Rosslyn => New York City",
+        "Flixbus 2602: New York City => Washington, D.C.",
+        "Flixbus 2602: Washington, D.C. => New York City",
+        "Flixbus N2610: Boston => Washington, D.C.",
+        "Flixbus N2610: Washington, D.C. => Boston",
+        "Light Rail Shuttle: Falls Road to Camden Yards",
+        "LocalLink 21: Canton Crossing",
+        "LocalLink 21: Woodberry",
+        "LocalLink 22: Bayview Medical Center",
+        "LocalLink 22: Mondawmin Metro Station",
+        "LocalLink 26: Mondawmin",
+        "LocalLink 26: South Baltimore Park & Ride",
+        "LocalLink 28: Moravia",
+        "LocalLink 28: Rogers Avenue Metro Station",
+        "LocalLink 29: Brooklyn",
+        "LocalLink 29: Mondawmin",
+        "LocalLink 30: Rogers Avenue",
+        "LocalLink 51: Inner Harbor to Towson",
+        "LocalLink 51: Towson to Inner Harbor",
+        "LocalLink 52: Greenmount North",
+        "LocalLink 52: Stella Maris",
+        "LocalLink 53: Hillendale",
+        "LocalLink 53: Sheppard Pratt",
+        "LocalLink 53: State Center",
+        "LocalLink 54: Carney",
+        "LocalLink 54: Goucher & Taylor",
+        "LocalLink 54: State Center",
+        "LocalLink 56: Charles Center",
+        "LocalLink 56: White Marsh Mall",
+        "LocalLink 56: White Marsh Park & Ride",
+        "LocalLink 57: Belair-Edison Loop (Big Loop)",
+        "LocalLink 57: Belair-Edison Loop (Small Loop)",
+        "LocalLink 59: Moravia",
+        "LocalLink 59: Whispering Woods",
+        "LocalLink 62: CCBC Essex",
+        "LocalLink 62: Turner's Station",
+        "LocalLink 63: Bayview",
+        "LocalLink 63: Inner Harbor",
+        "LocalLink 63: Tradepoint Atlantic",
+        "LocalLink 65: CCBC Dundalk",
+        "LocalLink 65: Charles Center",
+        "LocalLink 67: City Hall",
+        "LocalLink 67: Marley Neck",
+        "LocalLink 69: Jumpers Hole",
+        "LocalLink 69: Patapsco",
+        "LocalLink 69: UM Transit Center",
+        "LocalLink 70: Annapolis",
+        "LocalLink 70: Patapsco",
+        "LocalLink 70: UM Transit Center",
+        "LocalLink 71: Lexington Market",
+        "LocalLink 71: Patapsco",
+        "LocalLink 73: Charles Center",
+        "LocalLink 73: Patapsco",
+        "LocalLink 75: Arundel Mills",
+        "LocalLink 75: Arundel Mills (late)",
+        "LocalLink 75: Parkway Center",
+        "LocalLink 75: Parkway Center (late)",
+        "LocalLink 75: Patapsco",
+        "LocalLink 75: UM Transit Center (late)",
+        "LocalLink 76: City Hall",
+        "LocalLink 76: Southwest Park & Ride",
+        "LocalLink 77: Catonsville (Route 40 & Rolling Road)",
+        "LocalLink 77: West Baltimore",
+        "LocalLink 78: CMS",
+        "LocalLink 78: CMS (Center for Medicare and Medicaid Services) to Downtown",
+        "LocalLink 78: West Baltimore",
+        "LocalLink 79: CMS",
+        "LocalLink 79: Mondawmin",
+        "LocalLink 80: City Hall",
+        "LocalLink 80: Rogers Avenue",
+        "LocalLink 82: Park Circle (Monte Verde)",
+        "LocalLink 82: Reisterstown Plaza",
+        "LocalLink 83: Mondawmin Metro Station",
+        "LocalLink 83: Old Court Station",
+        "LocalLink 85: Milford Mill",
+        "LocalLink 85: Penn-North",
+        "LocalLink 91: Mondawmin",
+        "LocalLink 91: Sinai Hospital",
+        "LocalLink 94: Fort McHenry",
+        "LocalLink 94: Sinai Hospital",
+        "LocalLink 95: Inner Harbor",
+        "LocalLink 95: Roland Park (Bellemore)",
+        "North Avenue & Madison Avenue Far-side Eastbound",
+        "North Avenue & Madison Avenue Westbound",
+        "North Avenue & McCulloh Street",
+        "QuickLink 40: Middle River to Westgate",
+        "QuickLink 40: Westgate to Middle River",
+        "UM Shuttle 702: Mount Vernon"
+      ],
+      "rail_routes": [
+        "Amtrak Acela: Boston => Washington",
+        "Amtrak Acela: New York => Washington",
+        "Amtrak Acela: Washington => Boston",
+        "Amtrak Acela: Washington => New York",
+        "Amtrak Cardinal: Chicago => New York",
+        "Amtrak Cardinal: New York => Chicago",
+        "Amtrak Carolinian: Charlotte => New York",
+        "Amtrak Carolinian: New York => Charlotte",
+        "Amtrak Crescent: New Orleans => New York",
+        "Amtrak Crescent: New York => New Orleans",
+        "Amtrak Northeast Regional: Boston => Newport News",
+        "Amtrak Northeast Regional: Boston => Norfolk",
+        "Amtrak Northeast Regional: Boston => Richmond",
+        "Amtrak Northeast Regional: Boston => Roanoke",
+        "Amtrak Northeast Regional: Boston => Washington",
+        "Amtrak Northeast Regional: New York => Newport News",
+        "Amtrak Northeast Regional: New York => Norfolk",
+        "Amtrak Northeast Regional: New York => Roanoke",
+        "Amtrak Northeast Regional: New York => Washington",
+        "Amtrak Northeast Regional: Newport News => Boston",
+        "Amtrak Northeast Regional: Newport News => New York",
+        "Amtrak Northeast Regional: Norfolk => Boston",
+        "Amtrak Northeast Regional: Norfolk => New York",
+        "Amtrak Northeast Regional: Richmond => Boston",
+        "Amtrak Northeast Regional: Roanoke => Boston",
+        "Amtrak Northeast Regional: Roanoke => New York",
+        "Amtrak Northeast Regional: Springfield => Norfolk",
+        "Amtrak Northeast Regional: Springfield => Roanoke",
+        "Amtrak Northeast Regional: Springfield => Washington",
+        "Amtrak Northeast Regional: Washington => Boston",
+        "Amtrak Northeast Regional: Washington => New York",
+        "Amtrak Northeast Regional: Washington => Springfield",
+        "Amtrak Palmetto: New York => Savannah",
+        "Amtrak Palmetto: Savannah => New York",
+        "Amtrak Silver Meteor: Miami => New York",
+        "Amtrak Silver Meteor: New York => Miami",
+        "Amtrak Silver Star: Miami => New York",
+        "Amtrak Silver Star: New York => Miami",
+        "Amtrak Vermonter: Saint Albans => Washington",
+        "Amtrak Vermonter: Washington => Saint Albans",
+        "Baltimore Light RailLink: BWI Airport to Hunt Valley",
+        "Baltimore Light RailLink: Camden Yards \u2192 Penn Station",
+        "Baltimore Light RailLink: Fairgrounds \u2192 Glen Burnie",
+        "Baltimore Light RailLink: Glen Burnie \u2192 Fairgrounds",
+        "Baltimore Light RailLink: Hunt Valley to BWI Airport",
+        "Baltimore Light RailLink: Penn Station \u2192 Camden Yards",
+        "Baltimore Metro SubwayLink: Johns Hopkins \u2192 Owings Mills",
+        "Baltimore Metro SubwayLink: Owings Mills \u2192 Johns Hopkins",
+        "MARC Camden Line: Baltimore => Washington",
+        "MARC Camden Line: Washington => Baltimore",
+        "MARC Penn Line: Baltimore => Washington",
+        "MARC Penn Line: Martin Airport => Washington",
+        "MARC Penn Line: Perryville => Washington",
+        "MARC Penn Line: Washington => Baltimore",
+        "MARC Penn Line: Washington => Martin Airport",
+        "MARC Penn Line: Washington => Perryville"
+      ]
+    },
+    "schools": {
+      "1mi": {
+        "count": 17,
+        "names": [
+          "Saint Marys Star of the Sea School",
+          "Southeast Baltimore Catholic Academy Father Kolbe Campus",
+          "Catholic Community School",
+          "The Crossroads School",
+          "National Academy Foundation School",
+          "In2Lectuals",
+          "Johns Hopkins Carey Business School",
+          "NCIA Herbert J. Hoelter Professional Training Center",
+          "Living Classrooms Foundation",
+          "Digital Harbor High School"
+        ]
+      },
+      "5mi": {
+        "count": 279,
+        "names": [
+          "Saint Clements School",
+          "Columbus School",
+          "Elmer A Henderson Elementary School",
+          "Patrick Henry School",
+          "Saint Rose of Lima School",
+          "Southern High School",
+          "Stratford University",
+          "Mary Ann Winterling Elementary School at Bentalou",
+          "Franklin Square Elementary School",
+          "James McHenry Elementary School"
+        ]
+      }
+    },
+    "hospitals": {
+      "1mi": {
+        "count": 0,
+        "names": []
+      },
+      "5mi": {
+        "count": 13,
+        "names": [
+          "Bloomberg Children\u2019s Center",
+          "Johns Hopkins Bayview Medical Center",
+          "Mercy Medical Center",
+          "Johns Hopkins Hospital",
+          "UM Medical Center Midtown Campus (UMMC)",
+          "Saint Agnes Hospital",
+          "Medstar Union Memorial Hospital",
+          "Grace Medical Center",
+          "Baltimore Veterans Affairs Medical Center",
+          "Shock Trauma"
+        ]
+      }
+    },
+    "clinics_pharmacies": {
+      "1mi": {
+        "count": 8,
+        "names": [
+          "CVS Pharmacy",
+          "Passport Health Baltimore Travel Clinic",
+          "MedStar Health",
+          "MedStar PromptCare",
+          "AllCare",
+          "Vein Clinics of America",
+          "Locust Point Foot and Ankle",
+          "Harris Teeter Pharmacy"
+        ]
+      },
+      "5mi": {
+        "count": 133,
+        "names": [
+          "Curtis National Hand Center",
+          "Walgreens",
+          "Wye Oak Pharmacy",
+          "Voshell's",
+          "CVS Pharmacy",
+          "Seton Imaging",
+          "Dundalk Pediatric Associates",
+          "Rite Aid",
+          "Lifeway Pharmacy",
+          "MingoCare Pharmacy"
+        ]
+      }
+    },
+    "cultural": {
+      "attractions": {
+        "1mi": {
+          "count": 10,
+          "names": [
+            "Samuel Smith Monument",
+            "Orpheus with the Awkward Foot",
+            "Whirligig",
+            "Armistead Monument",
+            "Frederick Douglass",
+            "Bluebird of Happiness",
+            "Birds Nest Balcony",
+            "Christopher Columbus"
+          ]
+        },
+        "5mi": {
+          "count": 222,
+          "names": [
+            "Church Hospital",
+            "Barre Circle Historic District",
+            "Butchers Hill Historic District",
+            "Cecilius Calvert Statue",
+            "Martin Luther Monument",
+            "Samuel Smith Monument",
+            "Under Sky/One Family",
+            "Chapin A. Harris Bust"
+          ]
+        }
+      },
+      "other": {
+        "1mi": {
+          "count": 11,
+          "names": [
+            "Broadway Methodist Church",
+            "Church of God",
+            "First United Evangelical and Reformed Church",
+            "Holy Cross Polish Catholic Church",
+            "Randall Street Christian Church",
+            "Sailors Union Bethel Church",
+            "Saint Augustine English Lutheran Church",
+            "Salem Evangelical Lutheran Church"
+          ]
+        },
+        "5mi": {
+          "count": 294,
+          "names": [
+            "New Shiloh Baptist Church",
+            "Christ Lutheran Church",
+            "Church of God at Dundalk",
+            "Pentecostal Church of God",
+            "English Consul Church",
+            "First Baptist Church",
+            "Crisp Memorial Presbyterian Church",
+            "Saint Katharines Convent"
+          ]
+        }
+      },
+      "theatres": {
+        "1mi": {
+          "count": 3,
+          "names": [
+            "Harbor East Cinemas",
+            "Fells Point Corner Theatre",
+            "Vagabond Theatre"
+          ]
+        },
+        "5mi": {
+          "count": 32,
+          "names": [
+            "Upton Cultural Center",
+            "Harbor East Cinemas",
+            "Harborplace Amphetheatre",
+            "Flagship Cinemas",
+            "The Dundalk Art School",
+            "Exittheapple Art Space",
+            "Mercury Theater",
+            "The Contemporary"
+          ]
+        }
+      },
+      "museums": {
+        "1mi": {
+          "count": 10,
+          "names": [
+            "The Alchemy Of Art",
+            "The Preservation Society",
+            "Frederick-Douglass Maritime Museum",
+            "History of the Inner harbor Exhibit",
+            "Baltimore Civil War Museum",
+            "Baltimore Immigration Museum",
+            "American Visionary Art Museum",
+            "Baltimore Museum of Industry"
+          ]
+        },
+        "5mi": {
+          "count": 52,
+          "names": [
+            "Lovely Lane Museum Library",
+            "Current Space",
+            "MakingSpace_Bmore",
+            "Amaranthine Museum",
+            "Walters Art Museum",
+            "The Alchemy Of Art",
+            "Tectonic Space",
+            "The Preservation Society"
+          ]
+        }
+      },
+      "music_venues": {
+        "1mi": {
+          "count": 1,
+          "names": [
+            "Keystone Korner Baltimore"
+          ]
+        },
+        "5mi": {
+          "count": 19,
+          "names": [
+            "Rams Head Live",
+            "Howl at the Moon",
+            "Ottobar",
+            "El Oasis",
+            "Lust Baltimore",
+            "2 O\u2019Clock Club",
+            "Down Town",
+            "Hammerjack's"
+          ]
+        }
+      },
+      "stadiums": {
+        "1mi": {
+          "count": 0,
+          "names": []
+        },
+        "5mi": {
+          "count": 7,
+          "names": [
+            "Clarence \"Du\" Burns Arena",
+            "Utz-Twardowicz Stadium",
+            "CFG Bank Arena",
+            "Paul Laurence Dunbar High School Stadium",
+            "Hughes Memorial Stadium",
+            "Oriole Park at Camden Yards",
+            "M&T Bank Stadium"
+          ]
+        }
+      }
+    },
+    "food_halls": {
+      "1mi": {
+        "count": 9,
+        "names": [
+          "Broadway Market",
+          "Canton Market",
+          "Lorena Latino Market",
+          "Whole Foods Market",
+          "Hat Mart Deli & Market",
+          "BMI Farmers Market",
+          "Fells Point Farmers Market",
+          "DiPasquale's Marketplace"
+        ]
+      },
+      "5mi": {
+        "count": 87,
+        "names": [
+          "Upton\u2013Avenue Market",
+          "Shot Tower/Market Place",
+          "Lexington Market",
+          "Union Square-Hollins Market Historic District",
+          "Hollins Market",
+          "Market Place Southbound",
+          "Cross Street Market",
+          "Broadway Market",
+          "Market Place Northbound",
+          "Patterson Food Market"
+        ]
+      }
+    },
+    "demographics": {
+      "1mi": {
+        "total_population": 20706,
+        "population_below_poverty": 1556,
+        "total_housing_units": 11277,
+        "owner_occupied_units": 5776,
+        "bachelors_degree_or_higher": 6593,
+        "total_commuters": 15036,
+        "transit_commuters": 546,
+        "median_household_income": 125898,
+        "median_age": 35.1,
+        "poverty_rate": 0.075,
+        "owner_occupancy_rate": 0.512,
+        "transit_commute_share": 0.036
+      },
+      "5mi": {
+        "total_population": 366279,
+        "population_below_poverty": 81828,
+        "total_housing_units": 162157,
+        "owner_occupied_units": 68008,
+        "bachelors_degree_or_higher": 47970,
+        "total_commuters": 171048,
+        "transit_commuters": 23375,
+        "median_household_income": 59322,
+        "median_age": -19985.1,
+        "poverty_rate": 0.223,
+        "owner_occupancy_rate": 0.419,
+        "transit_commute_share": 0.137
+      }
+    }
+  }
+}
