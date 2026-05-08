@@ -1,31 +1,24 @@
 #!/usr/bin/env python3
 """
 Building Footprint + LiDAR Height Pipeline
-Target: BLOCKLOT 1976 001 — 1000 Hull St, Locust Point, Baltimore MD 21230
+Coverage: all 69 properties in public/data/properties.json + 600m padding
 
-Data sources (all confirmed live):
+Data sources:
   Footprints:  OSM Overpass API  (primary)
-               Microsoft US Building Footprints — Maryland (secondary)
-  LiDAR DTM:  Maryland iMAP Baltimore City DEM ImageServer (1m, no auth)
-  LiDAR DSM:  USGS MD_4County_D24 LAZ tiles via rockyweb.usgs.gov (2024)
-  Parcels:    Local Real_Property_Information.geojson
+               Baltimore City Buildings_Footprint.geojson (secondary)
+  LiDAR DTM:  USGS 3DEP 1m National Elevation Service (full Baltimore coverage)
+  LiDAR DSM:  Cached USGS MD_4County_D24 LAZ tiles (used where available,
+               heuristic fallback elsewhere)
 
 Output:
   public/data/buildings-with-heights.geojson   ← deck.gl-ready
 
 Usage:
-  # Quick mode (OSM footprints + Maryland DTM, no LAZ download):
   python scripts/buildingPipeline.py --mode quick
-
-  # Full LiDAR pipeline (downloads ~600 MB of LAZ tiles):
-  python scripts/buildingPipeline.py --mode full
-
-  # Use pre-downloaded LAZ directory:
-  python scripts/buildingPipeline.py --mode full --laz-dir /path/to/laz
+  python scripts/buildingPipeline.py --mode full --laz-dir data/lidar_cache
 
 Install:
   pip install -r scripts/requirements_pipeline.txt
-  brew install pdal   # (macOS) or: conda install -c conda-forge pdal
 """
 
 import argparse
@@ -44,20 +37,33 @@ from tqdm import tqdm
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-# Study area: Locust Point / BLOCKLOT 1976 001 + ~500m buffer
-BBOX = (-76.605, 39.265, -76.575, 39.290)  # (west, south, east, north)
+ROOT    = Path(__file__).parent.parent
+OUT_DIR = ROOT / "public" / "data"
+OUT_FILE = OUT_DIR / "buildings-with-heights.geojson"
+LAZ_CACHE = ROOT / "data" / "lidar_cache"
+
+def _compute_bbox(padding_deg: float = 0.006) -> tuple:
+    """Derive bbox from properties.json + padding (~600m at Baltimore latitude)."""
+    props_file = OUT_DIR / "properties.json"
+    if props_file.exists():
+        with open(props_file) as f:
+            props = json.load(f)
+        lons = [p["lon"] for p in props]
+        lats = [p["lat"] for p in props]
+        return (
+            min(lons) - padding_deg,
+            min(lats) - padding_deg,
+            max(lons) + padding_deg,
+            max(lats) + padding_deg,
+        )
+    # Fallback: full inner Baltimore
+    return (-76.645, 39.258, -76.540, 39.315)
+
+BBOX = _compute_bbox()
 BBOX_WKT = (
     f"POLYGON(({BBOX[0]} {BBOX[1]},{BBOX[2]} {BBOX[1]},"
     f"{BBOX[2]} {BBOX[3]},{BBOX[0]} {BBOX[3]},{BBOX[0]} {BBOX[1]}))"
 )
-
-FEATURED_BLOCKLOT = "1976 001"
-
-# Output
-ROOT = Path(__file__).parent.parent
-OUT_DIR = ROOT / "public" / "data"
-OUT_FILE = OUT_DIR / "buildings-with-heights.geojson"
-LAZ_CACHE = ROOT / "data" / "lidar_cache"
 
 # ── USGS LAZ tiles (MD_4County_D24, 2024) covering our bbox ──────────────────
 # Confirmed via USGS TNM API: https://tnmaccess.nationalmap.gov/api/v1/products
@@ -268,7 +274,9 @@ def fetch_dtm_raster(bbox: tuple, resolution_m: float = 1.0) -> Path:
         "f":           "image",
     }
 
-    out_path = LAZ_CACHE / "dtm_baltimore.tif"
+    # Use bbox-specific filename so expanded runs don't reuse the old small raster
+    bbox_tag = f"{abs(bbox[0]):.3f}_{bbox[1]:.3f}_{abs(bbox[2]):.3f}_{bbox[3]:.3f}".replace(".", "")
+    out_path = LAZ_CACHE / f"dtm_{bbox_tag}.tif"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not out_path.exists():
@@ -587,12 +595,6 @@ def export_geojson(gdf, out_path: Path):
     """Write deck.gl-ready GeoJSON with height property."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Find the largest footprint on the featured blocklot to mark as featured
-    featured_candidates = gdf[gdf["BLOCKLOT"].str.strip() == FEATURED_BLOCKLOT]
-    featured_idx = None
-    if not featured_candidates.empty:
-        featured_idx = featured_candidates.to_crs("EPSG:32618").geometry.area.idxmax()
-
     features = []
     for idx, row in gdf.iterrows():
         if row.geometry is None or row.geometry.is_empty:
@@ -603,28 +605,26 @@ def export_geojson(gdf, out_path: Path):
             "type": "Feature",
             "geometry": row.geometry.__geo_interface__,
             "properties": {
-                "height_m":        h,
-                "height_source":   str(row.get("height_source", "estimate")),
-                "BLOCKLOT":        str(row.get("BLOCKLOT", "") or ""),
-                "ADDRESS":         str(row.get("ADDRESS", "") or ""),
-                "OWNER":           str(row.get("OWNER", "") or ""),
-                "ARTAXBAS":        float(row.get("ARTAXBAS", 0) or 0),
-                "osm_id":          int(row.get("osm_id", 0) or 0),
-                "building":        str(row.get("building", "") or ""),
-                "area_m2":         round(float(row.geometry.area * 1e10), 1),
-                "is_featured":     bool(idx == featured_idx),
+                "height_m":      h,
+                "height_source": str(row.get("height_source", "estimate")),
+                "BLOCKLOT":      str(row.get("BLOCKLOT", "") or ""),
+                "ADDRESS":       str(row.get("ADDRESS", "") or ""),
+                "OWNER":         str(row.get("OWNER", "") or ""),
+                "ARTAXBAS":      float(row.get("ARTAXBAS", 0) or 0),
+                "osm_id":        int(row.get("osm_id", 0) or 0),
+                "building":      str(row.get("building", "") or ""),
+                "area_m2":       round(float(row.geometry.area * 1e10), 1),
             },
         })
 
     geojson = {
         "type": "FeatureCollection",
         "metadata": {
-            "generated":        __import__("datetime").datetime.utcnow().isoformat() + "Z",
-            "bbox":             list(BBOX),
-            "featured_blocklot": FEATURED_BLOCKLOT,
-            "height_source":    "lidar_ndsm (USGS MD_4County_D24 2024 + MD iMAP DTM)",
-            "footprint_source": "OSM Overpass / Microsoft USBuildingFootprints",
-            "feature_count":    len(features),
+            "generated":       __import__("datetime").datetime.utcnow().isoformat() + "Z",
+            "bbox":            list(BBOX),
+            "height_source":   "lidar_ndsm (USGS 3DEP 1m + cached LAZ) / heuristic fallback",
+            "footprint_source": "OSM Overpass / Baltimore City Buildings_Footprint.geojson",
+            "feature_count":   len(features),
         },
         "features": features,
     }

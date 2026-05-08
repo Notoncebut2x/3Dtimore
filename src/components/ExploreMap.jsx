@@ -46,9 +46,6 @@ const INITIAL_VIEW = {
   maxZoom: 18
 };
 
-// Sonar dot — Inner Harbor landmark
-const SONAR_ORIGIN = [-76.6122, 39.2848];
-
 const NEON_YELLOW = [220, 255, 0];
 const NEON_YELLOW_HOVER = [255, 220, 0];
 
@@ -94,7 +91,7 @@ function SplitBar({ leftLabel, leftPct, rightLabel, rightPct, leftColor, rightCo
   );
 }
 
-function NeighborhoodPanel({ feature, onClose, onStartTour, activePins, onTogglePins }) {
+function NeighborhoodPanel({ feature, onClose, activePins, onTogglePins }) {
   const p = feature.properties;
   const hh = p.household || {};
   const occ = p.occupancy || {};
@@ -293,16 +290,12 @@ function NeighborhoodPanel({ feature, onClose, onStartTour, activePins, onToggle
         </div>
 
         {/* Tour CTA */}
-        <button
-          onClick={onStartTour}
-          className="w-full py-3 rounded-xl text-sm font-bold tracking-wide transition-all hover:scale-[1.02] active:scale-[0.98]"
-          style={{
-            background: 'linear-gradient(135deg, #dcff00 0%, #a8e600 100%)',
-            color: '#050510'
-          }}
+        <div
+          className="w-full py-2.5 rounded-xl text-xs text-center"
+          style={{ background: 'rgba(160,32,240,0.1)', border: '1px solid rgba(160,32,240,0.25)', color: 'rgba(200,130,255,0.8)' }}
         >
-          Enter Tour Mode →
-        </button>
+          Click a purple dot on the map to tour a property
+        </div>
       </div>
     </div>
   );
@@ -310,8 +303,9 @@ function NeighborhoodPanel({ feature, onClose, onStartTour, activePins, onToggle
 
 export default function ExploreMap({ onStartTour }) {
   const [neighborhoods, setNeighborhoods] = useState(null);
+  const [properties, setProperties] = useState([]);
   const [supermarkets, setSupermarkets] = useState([]);
-  const [activePins, setActivePins] = useState(null); // null | '15min' | '30min'
+  const [activePins, setActivePins] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [viewState, setViewState] = useState(INITIAL_VIEW);
@@ -320,39 +314,33 @@ export default function ExploreMap({ onStartTour }) {
   const [selectionRings, setSelectionRings] = useState([]);
   const animFrameRef = useRef(null);
   const ringTimerRef = useRef(null);
+  const pingTimerRef = useRef(null);
   const selectionRingId = useRef(0);
+  const pingRingId = useRef(0);
 
   useEffect(() => {
-    fetch('/data/neighborhoods.geojson')
-      .then(r => r.json())
-      .then(setNeighborhoods)
-      .catch(console.error);
-    fetch('/data/supermarkets.json')
-      .then(r => r.json())
-      .then(setSupermarkets)
-      .catch(console.error);
+    fetch('/data/neighborhoods.geojson').then(r => r.json()).then(setNeighborhoods).catch(console.error);
+    fetch('/data/supermarkets.json').then(r => r.json()).then(setSupermarkets).catch(console.error);
+    fetch('/data/properties.json').then(r => r.json()).then(setProperties).catch(console.error);
   }, []);
 
   // Clear pins when neighborhood changes
   useEffect(() => { setActivePins(null); }, [selectedFeature?.properties?.name]);
 
-  // Sonar animation — periodic ring bursts
+  // Random sonar pings on property dots
   useEffect(() => {
-    let nextId = 0;
-
-    function spawnRings() {
-      const id = nextId++;
-      setSonarRings(prev => [...prev, { id, born: Date.now() }]);
-      // Schedule next burst randomly 3–8 sec
-      const delay = 3000 + Math.random() * 5000;
-      ringTimerRef.current = setTimeout(spawnRings, delay);
+    if (!properties.length) return;
+    function ping() {
+      const prop = properties[Math.floor(Math.random() * properties.length)];
+      const id = pingRingId.current++;
+      setSonarRings(prev => [...prev, { id, born: Date.now(), position: [prop.lon, prop.lat] }]);
+      pingTimerRef.current = setTimeout(ping, 2000 + Math.random() * 4000);
     }
+    ping();
+    return () => clearTimeout(pingTimerRef.current);
+  }, [properties]);
 
-    spawnRings();
-    return () => {
-      clearTimeout(ringTimerRef.current);
-    };
-  }, []);
+  // Animate all rings and pulse tick
 
   // Animate all rings and pulse tick
   useEffect(() => {
@@ -374,12 +362,12 @@ export default function ExploreMap({ onStartTour }) {
   // Build sonar ring layers
   const now = Date.now();
   const sonarLayers = sonarRings.map(ring => {
-    const elapsed = (now - ring.born) / 3000; // 0→1
-    const radius = elapsed * 4000; // meters
+    const elapsed = (now - ring.born) / 3000;
+    const radius = elapsed * 3000;
     const opacity = Math.max(0, 1 - elapsed);
     return new ScatterplotLayer({
       id: `sonar-ring-${ring.id}`,
-      data: [{ position: SONAR_ORIGIN }],
+      data: [{ position: ring.position }],
       getPosition: d => d.position,
       getRadius: radius,
       getFillColor: [0, 0, 0, 0],
@@ -388,23 +376,23 @@ export default function ExploreMap({ onStartTour }) {
       stroked: true,
       filled: false,
       radiusUnits: 'meters',
-      updateTriggers: { getRadius: ring.id + elapsed, getLineColor: ring.id + elapsed }
+      updateTriggers: { getRadius: elapsed, getLineColor: elapsed }
     });
   });
 
-  const sonarDotLayer = new ScatterplotLayer({
-    id: 'sonar-dot',
-    data: [{ position: SONAR_ORIGIN }],
-    getPosition: d => d.position,
-    getRadius: 10,
-    getFillColor: [160, 32, 240, 255],
-    getLineColor: [200, 120, 255, 200],
-    lineWidthMinPixels: 2,
+  const propertyDotsLayer = properties.length ? new ScatterplotLayer({
+    id: 'property-dots',
+    data: properties,
+    getPosition: d => [d.lon, d.lat],
+    getRadius: 7,
+    getFillColor: [160, 32, 240, 220],
+    getLineColor: [200, 120, 255, 180],
+    lineWidthMinPixels: 1.5,
     stroked: true,
     radiusUnits: 'pixels',
     pickable: true,
-    onClick: () => onStartTour()
-  });
+    onClick: ({ object }) => { if (object) onStartTour(object); }
+  }) : null;
 
   const selectedName = selectedFeature?.properties?.name;
 
@@ -494,7 +482,7 @@ export default function ExploreMap({ onStartTour }) {
     ...selectionRingLayers,
     supermarketPinLayer,
     ...sonarLayers,
-    sonarDotLayer
+    propertyDotsLayer,
   ].filter(Boolean);
 
   return (
@@ -505,11 +493,14 @@ export default function ExploreMap({ onStartTour }) {
         controller={true}
         layers={layers}
         getCursor={({ isHovering }) => isHovering ? 'pointer' : 'grab'}
-        getTooltip={({ object, layer }) =>
-          layer?.id === 'supermarket-pins' && object
-            ? { html: `<div style="background:#0a0a1a;border:1px solid rgba(220,255,0,0.4);padding:6px 10px;border-radius:8px;font-size:12px;color:#fff">${object.name}</div>`, style: { background: 'none', border: 'none' } }
-            : null
-        }
+        getTooltip={({ object, layer }) => {
+          if (!object || !layer) return null;
+          if (layer.id === 'supermarket-pins')
+            return { html: `<div style="background:#0a0a1a;border:1px solid rgba(220,255,0,0.4);padding:6px 10px;border-radius:8px;font-size:12px;color:#fff">${object.name}</div>`, style: { background: 'none', border: 'none' } };
+          if (layer.id === 'property-dots')
+            return { html: `<div style="background:#0a0a1a;border:1px solid rgba(160,32,240,0.5);padding:6px 10px;border-radius:8px;font-size:12px;color:#fff"><div style="color:#c084fc;font-weight:600">${object.name}</div><div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px">${object.type}</div></div>`, style: { background: 'none', border: 'none' } };
+          return null;
+        }}
       >
         <Map mapStyle={BW_SATELLITE_STYLE} />
       </DeckGL>
@@ -537,7 +528,7 @@ export default function ExploreMap({ onStartTour }) {
             backdropFilter: 'blur(8px)'
           }}
         >
-          Click any neighborhood to explore · Click the purple dot to enter tour mode
+          Click any neighborhood to explore · Click a purple dot to tour a property
         </div>
       )}
 
@@ -546,7 +537,6 @@ export default function ExploreMap({ onStartTour }) {
         <NeighborhoodPanel
           feature={selectedFeature}
           onClose={() => setSelectedFeature(null)}
-          onStartTour={onStartTour}
           activePins={activePins}
           onTogglePins={key => setActivePins(prev => prev === key ? null : key)}
         />

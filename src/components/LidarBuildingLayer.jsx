@@ -92,12 +92,17 @@ export function buildLidarLayers({
   onHover          = () => {},
   onSelect         = () => {},
   showFeatured     = true,
+  excludeFeatures  = null,
 }) {
   if (!data) return [];
 
+  const layerData = excludeFeatures?.size
+    ? { ...data, features: data.features.filter(f => !excludeFeatures.has(f)) }
+    : data;
+
   const allLayer = new GeoJsonLayer({
     id: 'lidar-buildings',
-    data,
+    data: layerData,
     pickable: true,
     extruded: true,
     wireframe: false,

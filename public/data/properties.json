@@ -1,0 +1,692 @@
+[
+  {
+    "id": "peninsula_rye_street_market",
+    "name": "Rye Street Market",
+    "address": "301 Mission Blvd, MD 21230",
+    "type": "Office / Retail (Mixed-Use)",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6067613,
+    "lat": 39.2650989,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_the_exchange_at_rye_",
+    "name": "The Exchange at Rye Street",
+    "address": "301 Mission Blvd (1st Floor), MD 21230",
+    "type": "Retail \u0097 Multi-Vendor Market Hall",
+    "market": "Baltimore Peninsula",
+    "lon": -76.607,
+    "lat": 39.2652,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_2455_house_street",
+    "name": "2455 House Street",
+    "address": "2455 House St, MD 21230",
+    "type": "Class A Office",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6089241,
+    "lat": 39.2631876,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_building_e11",
+    "name": "Building E11",
+    "address": "Banner St & Cromwell St, MD 21230",
+    "type": "Office",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6104228,
+    "lat": 39.264449,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_301_s_mission_boulev",
+    "name": "301 S Mission Boulevard",
+    "address": "301 S Mission Blvd, MD 21230",
+    "type": "Office",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6064,
+    "lat": 39.2648,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_city_garage_s&t_cent",
+    "name": "City Garage S&T Center",
+    "address": "101 W Dickman St, MD 21230",
+    "type": "Flex / Lab / R&D / Manufacturing",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6159424,
+    "lat": 39.2628298,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_300_e_cromwell_stree",
+    "name": "300 E Cromwell Street",
+    "address": "300 E Cromwell St, MD 21230",
+    "type": "Industrial Land \u0097 18 Acres",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6101,
+    "lat": 39.264449,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_175_w_ostend_street",
+    "name": "175 W Ostend Street",
+    "address": "175 W Ostend St, MD 21230",
+    "type": "Office / Retail",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6191577,
+    "lat": 39.2747777,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_1401_severn_street",
+    "name": "1401 Severn Street",
+    "address": "1401 Severn St, MD 21230",
+    "type": "Retail \u0097 64,120 SF",
+    "market": "Baltimore Peninsula",
+    "lon": -76.6320655,
+    "lat": 39.2748269,
+    "notes": ""
+  },
+  {
+    "id": "peninsula_1800_johnson_street",
+    "name": "1800 Johnson Street",
+    "address": "1800 Johnson St, MD 21230",
+    "type": "Commercial",
+    "market": "Baltimore Peninsula",
+    "lon": -76.609944,
+    "lat": 39.2690964,
+    "notes": ""
+  },
+  {
+    "id": "canton_lighthouse_landing",
+    "name": "Lighthouse Landing",
+    "address": "2700-2800 Lighthouse Pt E, MD 21224",
+    "type": "Office / Medical / Retail",
+    "market": "Canton",
+    "lon": -76.57782,
+    "lat": 39.278753,
+    "notes": ""
+  },
+  {
+    "id": "canton_the_broom_factory",
+    "name": "The Broom Factory",
+    "address": "3500 Boston St, MD 21224",
+    "type": "Historic Loft / Creative Office",
+    "market": "Canton",
+    "lon": -76.5673754,
+    "lat": 39.2778035,
+    "notes": ""
+  },
+  {
+    "id": "canton_brown's_wharf",
+    "name": "Brown's Wharf",
+    "address": "1631-1637 Thames St, MD 21231",
+    "type": "Historic Office",
+    "market": "Canton",
+    "lon": -76.593671,
+    "lat": 39.281509,
+    "notes": ""
+  },
+  {
+    "id": "canton_tack_factory",
+    "name": "Tack Factory",
+    "address": "1300 Bank St, MD 21231",
+    "type": "Historic Mixed-Use",
+    "market": "Canton",
+    "lon": -76.598757,
+    "lat": 39.2866436,
+    "notes": ""
+  },
+  {
+    "id": "canton_yard_56",
+    "name": "Yard 56",
+    "address": "5601 Eastern Ave, MD 21224",
+    "type": "Modern Retail",
+    "market": "Canton",
+    "lon": -76.547333,
+    "lat": 39.2868821,
+    "notes": ""
+  },
+  {
+    "id": "canton_2907-2911_o'donnell_",
+    "name": "2907-2911 O'Donnell Street",
+    "address": "2907-2911 O'Donnell St, MD 21224",
+    "type": "Premium Retail",
+    "market": "Canton",
+    "lon": -76.5751244,
+    "lat": 39.2798772,
+    "notes": ""
+  },
+  {
+    "id": "canton_waterfront_office_sp",
+    "name": "Waterfront Office Space",
+    "address": "2030 Aliceanna St, MD 21231",
+    "type": "Office / Retail (Value Add)",
+    "market": "Canton",
+    "lon": -76.5876419,
+    "lat": 39.2841163,
+    "notes": ""
+  },
+  {
+    "id": "canton_720_s._montford_aven",
+    "name": "720 S. Montford Avenue",
+    "address": "720 S Montford Ave, MD 21224",
+    "type": "Boutique Office / Historic",
+    "market": "Canton",
+    "lon": -76.5829936,
+    "lat": 39.2834761,
+    "notes": ""
+  },
+  {
+    "id": "canton_lighthouse_point_yac",
+    "name": "Lighthouse Point Yachting Center",
+    "address": "2760 Boston St, MD 21224",
+    "type": "Marina-Side Office",
+    "market": "Canton",
+    "lon": -76.5774154,
+    "lat": 39.2790511,
+    "notes": ""
+  },
+  {
+    "id": "canton_3701_eastern_avenue",
+    "name": "3701 Eastern Avenue",
+    "address": "3701 Eastern Ave, MD 21224",
+    "type": "Office / Medical",
+    "market": "Canton",
+    "lon": -76.5662773,
+    "lat": 39.2863768,
+    "notes": ""
+  },
+  {
+    "id": "downtown_pratt_plaza_tower_ii",
+    "name": "Pratt Plaza Tower II",
+    "address": "100 S Charles St, MD 21201",
+    "type": "Class A Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.6157314,
+    "lat": 39.2869711,
+    "notes": ""
+  },
+  {
+    "id": "downtown_one_north_charles",
+    "name": "One North Charles",
+    "address": "1 N Charles St, MD 21201",
+    "type": "Class A Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.615105,
+    "lat": 39.2902659,
+    "notes": ""
+  },
+  {
+    "id": "downtown_pier_iv_\u0097_spark_flex",
+    "name": "Pier IV \u0097 Spark Flex",
+    "address": "621 E Pratt St, MD 21202",
+    "type": "Class A Office / Coworking",
+    "market": "Downtown Baltimore",
+    "lon": -76.6070624,
+    "lat": 39.2853817,
+    "notes": ""
+  },
+  {
+    "id": "downtown_31_light_street",
+    "name": "31 Light Street",
+    "address": "31 Light St, MD 21202",
+    "type": "Historic Office / Medical",
+    "market": "Downtown Baltimore",
+    "lon": -76.6133027,
+    "lat": 39.2879933,
+    "notes": ""
+  },
+  {
+    "id": "downtown_the_railway_express",
+    "name": "The Railway Express",
+    "address": "1501 Saint Paul St, MD 21202",
+    "type": "Historic Loft Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.614082,
+    "lat": 39.306596,
+    "notes": ""
+  },
+  {
+    "id": "downtown_the_chesapeake_build",
+    "name": "The Chesapeake Building",
+    "address": "1701-1709 N Charles St, MD 21201",
+    "type": "Boutique Historic Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.6161684,
+    "lat": 39.3089269,
+    "notes": ""
+  },
+  {
+    "id": "downtown_1110-1120_n_charles",
+    "name": "1110-1120 N Charles",
+    "address": "1110 N Charles St, MD 21201",
+    "type": "Mixed-Use (Office / Retail)",
+    "market": "Downtown Baltimore",
+    "lon": -76.6163499,
+    "lat": 39.3028781,
+    "notes": ""
+  },
+  {
+    "id": "downtown_the_cokesbury_buildi",
+    "name": "The Cokesbury Building",
+    "address": "516 N Charles St, MD 21201",
+    "type": "Historic Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.6158,
+    "lat": 39.296,
+    "notes": ""
+  },
+  {
+    "id": "downtown_the_maryland_life_bu",
+    "name": "The Maryland Life Building",
+    "address": "8-10 South St, MD 21202",
+    "type": "Historic Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.6108199,
+    "lat": 39.2893512,
+    "notes": ""
+  },
+  {
+    "id": "downtown_howard_row",
+    "name": "Howard Row",
+    "address": "413 N Howard St, MD 21201",
+    "type": "Retail",
+    "market": "Downtown Baltimore",
+    "lon": -76.6211,
+    "lat": 39.2904,
+    "notes": ""
+  },
+  {
+    "id": "downtown_1111_maryland_avenue",
+    "name": "1111 Maryland Avenue",
+    "address": "1111 Maryland Ave, MD 21201",
+    "type": "Value Add Office",
+    "market": "Downtown Baltimore",
+    "lon": -76.6171275,
+    "lat": 39.302852,
+    "notes": ""
+  },
+  {
+    "id": "downtown_404_east_baltimore_s",
+    "name": "404 East Baltimore Street",
+    "address": "404 E Baltimore St, MD 21202",
+    "type": "Mixed-Use (Whole-Building)",
+    "market": "Downtown Baltimore",
+    "lon": -76.609912,
+    "lat": 39.2899423,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_29_e_cross_street",
+    "name": "29 E Cross Street",
+    "address": "29 E Cross St, MD 21230",
+    "type": "Retail",
+    "market": "Federal Hill",
+    "lon": -76.6132414,
+    "lat": 39.2765367,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_15_e_cross_street",
+    "name": "15 E Cross Street",
+    "address": "15 E Cross St, MD 21230",
+    "type": "Retail",
+    "market": "Federal Hill",
+    "lon": -76.6135,
+    "lat": 39.2765,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1037_light_street",
+    "name": "1037 Light Street",
+    "address": "1037 Light St, MD 21230",
+    "type": "Retail \u0097 2,340 SF",
+    "market": "Federal Hill",
+    "lon": -76.6121533,
+    "lat": 39.2774673,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1108_light_street",
+    "name": "1108 Light Street",
+    "address": "1108 Light St, MD 21230",
+    "type": "Retail \u0097 2,700 SF",
+    "market": "Federal Hill",
+    "lon": -76.6124,
+    "lat": 39.2769,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1118_light_street",
+    "name": "1118 Light Street",
+    "address": "1118 Light St, MD 21230",
+    "type": "Retail (Ground Floor Mixed-Use)",
+    "market": "Federal Hill",
+    "lon": -76.6126224,
+    "lat": 39.2762787,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1125_s_charles_stree",
+    "name": "1125 S Charles Street",
+    "address": "1125 S Charles St, MD 21230",
+    "type": "Retail \u0097 For Sale",
+    "market": "Federal Hill",
+    "lon": -76.6141024,
+    "lat": 39.2761019,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_37_w_cross_street",
+    "name": "37 W Cross Street",
+    "address": "37 W Cross St, MD 21230",
+    "type": "Retail",
+    "market": "Federal Hill",
+    "lon": -76.6143,
+    "lat": 39.2765,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1005_n_charles_stree",
+    "name": "1005 N Charles Street",
+    "address": "1005 N Charles St, MD 21201",
+    "type": "Mixed / Retail \u0097 13,000 SF",
+    "market": "Federal Hill",
+    "lon": -76.615,
+    "lat": 39.282,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1023_s_charles_stree",
+    "name": "1023 S Charles Street",
+    "address": "1023 S Charles St, MD 21230",
+    "type": "Mixed / Retail \u0097 5,000 SF",
+    "market": "Federal Hill",
+    "lon": -76.6143,
+    "lat": 39.2758,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_900_e_fort_avenue",
+    "name": "900 E Fort Avenue",
+    "address": "900 E Fort Ave, MD 21230",
+    "type": "Retail \u0097 6,615 SF",
+    "market": "Federal Hill",
+    "lon": -76.6003369,
+    "lat": 39.2718049,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_301_e_fort_avenue",
+    "name": "301 E Fort Avenue",
+    "address": "301 E Fort Ave, MD 21230",
+    "type": "Office / Retail",
+    "market": "Federal Hill",
+    "lon": -76.6089175,
+    "lat": 39.272667,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_500_harborview_drive",
+    "name": "500 Harborview Drive",
+    "address": "500 Harborview Dr, MD 21230",
+    "type": "Office / Retail \u0097 7,064 SF",
+    "market": "Federal Hill",
+    "lon": -76.6045174,
+    "lat": 39.2761662,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_814_light_street",
+    "name": "814 Light Street",
+    "address": "814 Light St, MD 21230",
+    "type": "Office \u0097 For Sale",
+    "market": "Federal Hill",
+    "lon": -76.6132008,
+    "lat": 39.2792439,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_575_s_charles_street",
+    "name": "575 S Charles Street",
+    "address": "575 S Charles St, MD 21230",
+    "type": "Office \u0097 72,042 SF",
+    "market": "Federal Hill",
+    "lon": -76.6144115,
+    "lat": 39.2825094,
+    "notes": ""
+  },
+  {
+    "id": "federalhill_1900_light_street",
+    "name": "1900 Light Street",
+    "address": "1900 Light St, MD 21230",
+    "type": "Retail / Office \u0097 34,500 SF",
+    "market": "Federal Hill",
+    "lon": -76.612,
+    "lat": 39.271,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_100_international_dr",
+    "name": "100 International Drive",
+    "address": "100 International Dr, MD 21202",
+    "type": "Class A Office \u0097 559,192 SF",
+    "market": "Harbor East",
+    "lon": -76.601512,
+    "lat": 39.2828973,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_1001_fleet_street",
+    "name": "1001 Fleet Street",
+    "address": "1001 Fleet St, MD 21202",
+    "type": "Class A Mixed-Use",
+    "market": "Harbor East",
+    "lon": -76.5995094,
+    "lat": 39.2839916,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_650_s._exeter_street",
+    "name": "650 S. Exeter Street",
+    "address": "650 S Exeter St, MD 21202",
+    "type": "Class A Office",
+    "market": "Harbor East",
+    "lon": -76.60042,
+    "lat": 39.2836692,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_1000_lancaster_stree",
+    "name": "1000 Lancaster Street",
+    "address": "1000 Lancaster St, MD 21202",
+    "type": "Class A Office (Renovated 2023)",
+    "market": "Harbor East",
+    "lon": -76.5996683,
+    "lat": 39.282667,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_720_aliceanna_street",
+    "name": "720 Aliceanna Street",
+    "address": "720 Aliceanna St, MD 21202",
+    "type": "Class A Mixed-Use",
+    "market": "Harbor East",
+    "lon": -76.6023062,
+    "lat": 39.2833771,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_901_s._bond_street",
+    "name": "901 S. Bond Street",
+    "address": "901 S Bond St, MD 21231",
+    "type": "Pier Office",
+    "market": "Harbor East",
+    "lon": -76.5945061,
+    "lat": 39.2805499,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_ej_codd_building",
+    "name": "EJ Codd Building",
+    "address": "700 S Caroline St, MD 21231",
+    "type": "Historic Office / Retail",
+    "market": "Harbor East",
+    "lon": -76.5970432,
+    "lat": 39.2830009,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_avalon_555_president",
+    "name": "Avalon 555 President",
+    "address": "555 President St, MD 21202",
+    "type": "Retail (Luxury Tower Ground Floor)",
+    "market": "Harbor East",
+    "lon": -76.6024371,
+    "lat": 39.2849356,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_750_east_pratt_stree",
+    "name": "750 East Pratt Street",
+    "address": "750 E Pratt St, MD 21202",
+    "type": "Class A Office (Sublease)",
+    "market": "Harbor East",
+    "lon": -76.6055412,
+    "lat": 39.2874012,
+    "notes": ""
+  },
+  {
+    "id": "harboreast_800_s._caroline_stre",
+    "name": "800 S. Caroline Street",
+    "address": "800 S Caroline St, MD 21231",
+    "type": "Mixed-Use (Hyatt Place)",
+    "market": "Harbor East",
+    "lon": -76.5965615,
+    "lat": 39.2824245,
+    "notes": ""
+  },
+  {
+    "id": "southwest_4mlk_\u0097_biopark_phase",
+    "name": "4MLK \u0097 BioPark Phase I",
+    "address": "4 MLK Jr Blvd, MD 21201",
+    "type": "Class A Lab / Office / Flex / Retail",
+    "market": "Southwest Partnership",
+    "lon": -76.6283262,
+    "lat": 39.2893796,
+    "notes": ""
+  },
+  {
+    "id": "southwest_4mlk_phase_2_(bts)",
+    "name": "4MLK Phase 2 (BTS)",
+    "address": "4 MLK Jr Blvd, MD 21201",
+    "type": "Lab / Office / Manufacturing (BTS)",
+    "market": "Southwest Partnership",
+    "lon": -76.6291,
+    "lat": 39.2896,
+    "notes": ""
+  },
+  {
+    "id": "southwest_801_w_baltimore_stre",
+    "name": "801 W Baltimore Street",
+    "address": "801 W Baltimore St, MD 21201",
+    "type": "Office (BioPark Cluster)",
+    "market": "Southwest Partnership",
+    "lon": -76.6290472,
+    "lat": 39.2887981,
+    "notes": ""
+  },
+  {
+    "id": "southwest_800_w_baltimore_stre",
+    "name": "800 W Baltimore Street",
+    "address": "800 W Baltimore St, MD 21201",
+    "type": "Office (BioPark Cluster)",
+    "market": "Southwest Partnership",
+    "lon": -76.6294,
+    "lat": 39.2885,
+    "notes": ""
+  },
+  {
+    "id": "southwest_firehouse_@_4mlk",
+    "name": "Firehouse @ 4MLK",
+    "address": "760 W Baltimore St, MD 21201",
+    "type": "Retail (Adaptive Reuse Historic Firehouse)",
+    "market": "Southwest Partnership",
+    "lon": -76.628632,
+    "lat": 39.2892259,
+    "notes": ""
+  },
+  {
+    "id": "southwest_west_lexington_corri",
+    "name": "West Lexington Corridor",
+    "address": "600 Block W. Lexington St, MD 21201",
+    "type": "Retail (Future Delivery \u0097 2029)",
+    "market": "Southwest Partnership",
+    "lon": -76.627,
+    "lat": 39.29,
+    "notes": ""
+  },
+  {
+    "id": "southwest_413\u0096423_w_baltimore_",
+    "name": "413\u0096423 W Baltimore Street",
+    "address": "413\u0096423 W Baltimore St, MD 21201",
+    "type": "Retail",
+    "market": "Southwest Partnership",
+    "lon": -76.6215163,
+    "lat": 39.289108,
+    "notes": ""
+  },
+  {
+    "id": "southwest_813_washington_boule",
+    "name": "813 Washington Boulevard",
+    "address": "813 Washington Blvd, MD 21230",
+    "type": "Retail / Restaurant",
+    "market": "Southwest Partnership",
+    "lon": -76.6293606,
+    "lat": 39.2828228,
+    "notes": ""
+  },
+  {
+    "id": "southwest_1240_scott_street",
+    "name": "1240 Scott Street",
+    "address": "1240 Scott St, MD 21230",
+    "type": "Retail \u0097 3,600 SF",
+    "market": "Southwest Partnership",
+    "lon": -76.6287388,
+    "lat": 39.2778928,
+    "notes": ""
+  },
+  {
+    "id": "southwest_1143\u00961145_hollins_st",
+    "name": "1143\u00961145 Hollins Street",
+    "address": "1143\u00961145 Hollins St, MD 21223",
+    "type": "Mixed-Use (For Sale)",
+    "market": "Southwest Partnership",
+    "lon": -76.6364541,
+    "lat": 39.2872237,
+    "notes": ""
+  },
+  {
+    "id": "southwest_hollins_market",
+    "name": "Hollins Market",
+    "address": "26 S Arlington Ave, MD 21223",
+    "type": "Public Market \u0097 Vendor Stalls",
+    "market": "Southwest Partnership",
+    "lon": -76.6359013,
+    "lat": 39.287508,
+    "notes": ""
+  },
+  {
+    "id": "southwest_1200_w_baltimore_str",
+    "name": "1200 W Baltimore Street",
+    "address": "1200 W Baltimore St, MD 21223",
+    "type": "Office / Mixed-Use (Urban Business Center)",
+    "market": "Southwest Partnership",
+    "lon": -76.6369787,
+    "lat": 39.2889121,
+    "notes": ""
+  }
+]
