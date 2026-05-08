@@ -3,6 +3,5 @@ dist/
 .env
 .env.local
 *.local
-public/data/*.geojson
 data/*.geojson
 data/lidar_cache/

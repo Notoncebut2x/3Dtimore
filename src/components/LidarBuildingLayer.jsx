@@ -13,7 +13,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 
-const DATA_URL = '/data/buildings-with-heights.geojson';
+const DATA_URL = `${import.meta.env.BASE_URL}data/buildings-with-heights.geojson`;
 
 // Pre-computed 256-entry LUT: dark purple → lavender by height
 const HEIGHT_LUT = (() => {

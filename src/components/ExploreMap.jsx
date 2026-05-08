@@ -319,9 +319,10 @@ export default function ExploreMap({ onStartTour }) {
   const pingRingId = useRef(0);
 
   useEffect(() => {
-    fetch('/data/neighborhoods.geojson').then(r => r.json()).then(setNeighborhoods).catch(console.error);
-    fetch('/data/supermarkets.json').then(r => r.json()).then(setSupermarkets).catch(console.error);
-    fetch('/data/properties.json').then(r => r.json()).then(setProperties).catch(console.error);
+    const base = import.meta.env.BASE_URL;
+    fetch(`${base}data/neighborhoods.geojson`).then(r => r.json()).then(setNeighborhoods).catch(console.error);
+    fetch(`${base}data/supermarkets.json`).then(r => r.json()).then(setSupermarkets).catch(console.error);
+    fetch(`${base}data/properties.json`).then(r => r.json()).then(setProperties).catch(console.error);
   }, []);
 
   // Clear pins when neighborhood changes
