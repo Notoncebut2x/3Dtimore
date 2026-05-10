@@ -60,7 +60,7 @@ function buildTourSteps(property) {
     {
       title: name,
       body: `${type} — ${address}.${noteText}`,
-      viewState: { longitude: lon, latitude: lat, zoom: 16.25, pitch: 55, bearing: 0 },
+      viewState: { longitude: lon, latitude: lat, zoom: 16.25, pitch: 0, bearing: 0 },
       duration: 4500,
     },
     {
@@ -134,7 +134,7 @@ export default function TourMode({ property, onExit }) {
   );
 
   const buildingLayers = (!lidarLoading && !lidarError && lidarData)
-    ? buildLidarLayers({ data: lidarData, showFeatured: false, excludeFeatures: nearbySet })
+    ? buildLidarLayers({ data: lidarData, showFeatured: false, excludeFeatures: nearbySet, outlineOnly: true })
     : [];
 
   const highlightLayer = nearbyBuildings

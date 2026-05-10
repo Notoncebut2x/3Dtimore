@@ -42,11 +42,12 @@ const HEIGHT_LUT = (() => {
   });
 })();
 
-function heightColor(heightM, isSelected, isHovered) {
+function heightColor(heightM, isSelected, isHovered, transparent = false) {
   if (isSelected) return [255, 215, 30, 255];
   if (isHovered)  return [200, 220, 255, 220];
   const idx = Math.min(255, Math.round((Math.max(0, Math.min(heightM, 80)) / 80) * 255));
-  return HEIGHT_LUT[idx];
+  const color = HEIGHT_LUT[idx];
+  return transparent ? [color[0], color[1], color[2], 120] : color;
 }
 
 // ── Data hook ─────────────────────────────────────────────────────────────────
@@ -93,6 +94,7 @@ export function buildLidarLayers({
   onSelect         = () => {},
   showFeatured     = true,
   excludeFeatures  = null,
+  outlineOnly      = false,
 }) {
   if (!data) return [];
 
@@ -111,6 +113,7 @@ export function buildLidarLayers({
       f.properties.height_m || 0,
       f.properties.BLOCKLOT === selectedBlocklot,
       f.properties.BLOCKLOT === hoveredBlocklot,
+      outlineOnly,
     ),
     getLineColor:  [255, 255, 255, 18],
     lineWidthMinPixels: 0.4,
