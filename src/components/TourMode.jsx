@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
-import { ScatterplotLayer, GeoJsonLayer } from '@deck.gl/layers';
+import { GeoJsonLayer } from '@deck.gl/layers';
 import Map from 'react-map-gl/maplibre';
 import { useLidarBuildings, buildLidarLayers } from './LidarBuildingLayer';
 
@@ -103,12 +103,7 @@ export default function TourMode({ property, onExit }) {
   const [viewState, setViewState] = useState({ ...steps[0].viewState, minZoom: 10, maxZoom: 20 });
   const [playing, setPlaying] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
-  const [pulseRings, setPulseRings] = useState([]);
   const timerRef = useRef(null);
-  const ringTimerRef = useRef(null);
-  const ringId = useRef(0);
-  const animRef = useRef(null);
-  const [tick, setTick] = useState(0);
 
   const { data: lidarData, loading: lidarLoading, error: lidarError } = useLidarBuildings();
 
@@ -128,61 +123,6 @@ export default function TourMode({ property, onExit }) {
     return () => clearTimeout(timerRef.current);
   }, [stepIdx, playing, goToStep, steps]);
 
-  // Pulse rings on the property dot
-  useEffect(() => {
-    function spawn() {
-      const id = ringId.current++;
-      setPulseRings(prev => [...prev, { id, born: Date.now() }]);
-      ringTimerRef.current = setTimeout(spawn, 3000 + Math.random() * 4000);
-    }
-    spawn();
-    return () => clearTimeout(ringTimerRef.current);
-  }, []);
-
-  useEffect(() => {
-    function frame() {
-      const now = Date.now();
-      setPulseRings(prev => prev.filter(r => now - r.born < 3000));
-      setTick(t => t + 1);
-      animRef.current = requestAnimationFrame(frame);
-    }
-    animRef.current = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(animRef.current);
-  }, []);
-
-  const now = Date.now();
-  const pos = [property.lon, property.lat];
-
-  const ringLayers = pulseRings.map(ring => {
-    const elapsed = (now - ring.born) / 3000;
-    const radius = elapsed * 3000;
-    const opacity = Math.max(0, 1 - elapsed);
-    return new ScatterplotLayer({
-      id: `pulse-ring-${ring.id}`,
-      data: [{ position: pos }],
-      getPosition: d => d.position,
-      getRadius: radius,
-      getFillColor: [0, 0, 0, 0],
-      getLineColor: [160, 32, 240, Math.floor(opacity * 180)],
-      lineWidthMinPixels: 1.5,
-      stroked: true,
-      filled: false,
-      radiusUnits: 'meters',
-      updateTriggers: { getRadius: elapsed, getLineColor: elapsed }
-    });
-  });
-
-  const dotLayer = new ScatterplotLayer({
-    id: 'property-dot',
-    data: [{ position: pos }],
-    getPosition: d => d.position,
-    getRadius: 10,
-    getFillColor: [160, 32, 240, 255],
-    getLineColor: [200, 120, 255, 200],
-    lineWidthMinPixels: 2,
-    stroked: true,
-    radiusUnits: 'pixels',
-  });
 
   const nearbyBuildings = (!lidarLoading && !lidarError && lidarData)
     ? buildingsNearPoint(lidarData, property.lon, property.lat)
@@ -218,7 +158,7 @@ export default function TourMode({ property, onExit }) {
         viewState={viewState}
         onViewStateChange={({ viewState: vs }) => setViewState({ ...vs, minZoom: 10, maxZoom: 20 })}
         controller={{ dragRotate: true, touchRotate: true }}
-        layers={[...buildingLayers, ...(highlightLayer ? [highlightLayer] : []), ...ringLayers, dotLayer]}
+        layers={[...buildingLayers, ...(highlightLayer ? [highlightLayer] : [])]}
         style={{ position: 'absolute', inset: 0 }}
       >
         <Map mapStyle={DARK_MATTER_STYLE} reuseMaps attributionControl={false} />
