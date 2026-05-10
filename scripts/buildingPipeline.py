@@ -6,19 +6,21 @@ Coverage: all 69 properties in public/data/properties.json + 600m padding
 Data sources:
   Footprints:  OSM Overpass API  (primary)
                Baltimore City Buildings_Footprint.geojson (secondary)
-  LiDAR DTM:  USGS 3DEP 1m National Elevation Service (full Baltimore coverage)
-  LiDAR DSM:  Cached USGS MD_4County_D24 LAZ tiles (used where available,
-               heuristic fallback elsewhere)
+  LiDAR:      NOAA 2008 Baltimore City COPC LAZ tiles (AWS S3, public)
+               Streams only bbox points via PDAL COPC reader (no full download)
+               Fallback: download tile → laspy → delete
+  DTM:        Maryland iMAP Baltimore City DEM (confirmed working, tiled export)
 
 Output:
   public/data/buildings-with-heights.geojson   ← deck.gl-ready
 
 Usage:
   python scripts/buildingPipeline.py --mode quick
-  python scripts/buildingPipeline.py --mode full --laz-dir data/lidar_cache
+  python scripts/buildingPipeline.py --mode full
 
 Install:
   pip install -r scripts/requirements_pipeline.txt
+  pip install pdal   # optional but enables streaming (no large downloads)
 """
 
 import argparse
@@ -37,13 +39,12 @@ from tqdm import tqdm
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-ROOT    = Path(__file__).parent.parent
-OUT_DIR = ROOT / "public" / "data"
+ROOT     = Path(__file__).parent.parent
+OUT_DIR  = ROOT / "public" / "data"
 OUT_FILE = OUT_DIR / "buildings-with-heights.geojson"
 LAZ_CACHE = ROOT / "data" / "lidar_cache"
 
 def _compute_bbox(padding_deg: float = 0.006) -> tuple:
-    """Derive bbox from properties.json + padding (~600m at Baltimore latitude)."""
     props_file = OUT_DIR / "properties.json"
     if props_file.exists():
         with open(props_file) as f:
@@ -56,45 +57,22 @@ def _compute_bbox(padding_deg: float = 0.006) -> tuple:
             max(lons) + padding_deg,
             max(lats) + padding_deg,
         )
-    # Fallback: full inner Baltimore
     return (-76.645, 39.258, -76.540, 39.315)
 
 BBOX = _compute_bbox()
-BBOX_WKT = (
-    f"POLYGON(({BBOX[0]} {BBOX[1]},{BBOX[2]} {BBOX[1]},"
-    f"{BBOX[2]} {BBOX[3]},{BBOX[0]} {BBOX[3]},{BBOX[0]} {BBOX[1]}))"
-)
 
-# ── USGS LAZ tiles (MD_4County_D24, 2024) covering our bbox ──────────────────
-# Confirmed via USGS TNM API: https://tnmaccess.nationalmap.gov/api/v1/products
-USGS_LAZ_BASE = (
-    "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/"
-    "Projects/MD_4County_D24/MD_4County_2_D24/LAZ/"
-)
+# NOAA 2008 Baltimore City LiDAR — COPC LAZ tiles on AWS S3 (public, no auth)
+NOAA_S3_BASE     = "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/1199/"
+NOAA_URLLIST     = NOAA_S3_BASE + "urllist1199.txt"
+NOAA_MINMAX_CSV  = NOAA_S3_BASE + "2008_CityofBaltimore_minmax.csv"
 
-# MGRS 1km tiles covering bbox (18SUJ grid, 500m padding)
-USGS_LAZ_TILES = [
-    "USGS_LPC_MD_4County_D24_18suj610470.laz",
-    "USGS_LPC_MD_4County_D24_18suj610480.laz",
-    "USGS_LPC_MD_4County_D24_18suj610490.laz",
-    "USGS_LPC_MD_4County_D24_18suj620470.laz",
-    "USGS_LPC_MD_4County_D24_18suj620480.laz",
-    "USGS_LPC_MD_4County_D24_18suj620490.laz",
-    "USGS_LPC_MD_4County_D24_18suj630470.laz",
-    "USGS_LPC_MD_4County_D24_18suj630480.laz",
-    "USGS_LPC_MD_4County_D24_18suj630490.laz",
-]
-
-# USGS 3DEP 1m Elevation (bare earth, national coverage)
-MD_IMAP_DEM_URL = (
-    "https://elevation.nationalmap.gov/arcgis/rest/services/"
-    "3DEPElevation/ImageServer/exportImage"
+# Maryland iMAP Baltimore City DEM — use meters variant so units match DSM
+MD_IMAP_DEM_URL  = (
+    "https://mdgeodata.md.gov/lidar/rest/services/BaltimoreCity/"
+    "MD_baltimorecity_dem_m/ImageServer/exportImage"
 )
-
-# Microsoft Building Footprints — Maryland
-MSFT_FOOTPRINTS_URL = (
-    "https://minedbuildings.z5.web.core.windows.net/legacy/usbuildings-v2/Maryland.geojson.zip"
-)
+MD_IMAP_MAX_H    = 4000   # service hard limit (pixels)
+MD_IMAP_MAX_W    = 15000
 
 # OSM Overpass
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -103,7 +81,6 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 # ── Step 1: Building Footprints ───────────────────────────────────────────────
 
 def fetch_osm_footprints(bbox: tuple) -> dict:
-    """Fetch building footprints from OSM Overpass API as GeoJSON."""
     print("\n[1/5] Fetching OSM building footprints…")
     w, s, e, n = bbox
     query = f"""
@@ -116,12 +93,11 @@ out body;
 >;
 out skel qt;
 """
-    headers = {"User-Agent": "3Dtimore/1.0 (research project; rpnealon@gmail.com)"}
+    headers = {"User-Agent": "3Dtimore/1.0 (research; rpnealon@gmail.com)"}
     resp = requests.post(OVERPASS_URL, data={"data": query}, headers=headers, timeout=120)
     resp.raise_for_status()
     osm = resp.json()
 
-    # Convert OSM JSON to GeoJSON polygons
     nodes = {el["id"]: (el["lon"], el["lat"]) for el in osm["elements"] if el["type"] == "node"}
     features = []
     for el in osm["elements"]:
@@ -134,17 +110,17 @@ out skel qt;
             if len(coords) < 4:
                 continue
             tags = el.get("tags", {})
-            height_tag = float(tags.get("height", 0) or 0)
-            levels_tag = float(tags.get("building:levels", 0) or 0)
+            height_tag  = float(tags.get("height", 0) or 0)
+            levels_tag  = float(tags.get("building:levels", 0) or 0)
             features.append({
                 "type": "Feature",
                 "geometry": {"type": "Polygon", "coordinates": [coords]},
                 "properties": {
-                    "osm_id": el["id"],
-                    "building": tags.get("building", "yes"),
-                    "name": tags.get("name", ""),
-                    "osm_height_m": height_tag if height_tag > 0 else levels_tag * 3.5,
-                    "height_source": "osm_tag" if height_tag or levels_tag else "none",
+                    "osm_id":        el["id"],
+                    "building":      tags.get("building", "yes"),
+                    "name":          tags.get("name", ""),
+                    "osm_height_m":  height_tag if height_tag > 0 else levels_tag * 3.5,
+                    "height_source": "osm_tag" if (height_tag or levels_tag) else "none",
                 },
             })
         except (KeyError, TypeError):
@@ -154,50 +130,7 @@ out skel qt;
     return {"type": "FeatureCollection", "features": features}
 
 
-def fetch_microsoft_footprints(bbox: tuple) -> dict:
-    """Download and spatially filter Microsoft Building Footprints for Maryland."""
-    print("\n[1/5] Fetching Microsoft Building Footprints (Maryland)…")
-    print(f"  Downloading {MSFT_FOOTPRINTS_URL}")
-    print("  (410 MB — this takes a few minutes on first run)")
-
-    cache_path = LAZ_CACHE / "Maryland.geojson.zip"
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not cache_path.exists():
-        with requests.get(MSFT_FOOTPRINTS_URL, stream=True, timeout=300) as r:
-            r.raise_for_status()
-            total = int(r.headers.get("content-length", 0))
-            with open(cache_path, "wb") as f, tqdm(total=total, unit="B", unit_scale=True) as bar:
-                for chunk in r.iter_content(chunk_size=1 << 16):
-                    f.write(chunk)
-                    bar.update(len(chunk))
-    else:
-        print(f"  Using cached file: {cache_path}")
-
-    print("  Extracting and filtering to bbox…")
-    w, s, e, n = bbox
-    features = []
-
-    with zipfile.ZipFile(cache_path) as zf:
-        geojson_name = next(f for f in zf.namelist() if f.endswith(".geojson"))
-        with zf.open(geojson_name) as gf:
-            # Stream-parse because the file is large
-            import io
-            data = json.loads(gf.read())
-            for feat in data.get("features", []):
-                coords = feat["geometry"]["coordinates"][0]
-                cx = sum(c[0] for c in coords) / len(coords)
-                cy = sum(c[1] for c in coords) / len(coords)
-                if w <= cx <= e and s <= cy <= n:
-                    feat["properties"]["footprint_source"] = "microsoft"
-                    features.append(feat)
-
-    print(f"  → {len(features)} Microsoft footprints in bbox")
-    return {"type": "FeatureCollection", "features": features}
-
-
 def fetch_baltimore_footprints(bbox: tuple) -> dict:
-    """Load official Baltimore City building footprints from local file."""
     import decimal
     fp_path = ROOT / "data" / "Buildings_Footprint.geojson"
     if not fp_path.exists():
@@ -214,7 +147,6 @@ def fetch_baltimore_footprints(bbox: tuple) -> dict:
                 geom = feat.get("geometry")
                 if not geom:
                     continue
-                # Quick centroid bbox filter
                 coords = geom.get("coordinates", [[]])[0]
                 if not coords:
                     continue
@@ -225,7 +157,6 @@ def fetch_baltimore_footprints(bbox: tuple) -> dict:
                 cx, cy = sum(lngs) / len(lngs), sum(lats) / len(lats)
                 if not (w <= cx <= e and s <= cy <= n):
                     continue
-                # Normalise Decimal → float in coordinates
                 def fix_coords(ring):
                     return [[float(c) if isinstance(c, decimal.Decimal) else c for c in pt] for pt in ring]
                 if geom["type"] == "Polygon":
@@ -234,9 +165,7 @@ def fetch_baltimore_footprints(bbox: tuple) -> dict:
                          for k, v in feat.get("properties", {}).items()}
                 features.append({"type": "Feature", "geometry": geom, "properties": props})
     except ImportError:
-        # Fallback: geopandas
         import geopandas as gpd
-        from shapely.geometry import box
         gdf = gpd.read_file(str(fp_path), bbox=(w, s, e, n))
         return json.loads(gdf.to_json())
 
@@ -244,27 +173,35 @@ def fetch_baltimore_footprints(bbox: tuple) -> dict:
     return {"type": "FeatureCollection", "features": features}
 
 
-# ── Step 2: DTM — Maryland iMAP Baltimore City DEM ImageServer ────────────────
+# ── Step 2: DTM — Maryland iMAP DEM (tiled, confirmed working) ────────────────
 
-def fetch_dtm_raster(bbox: tuple, resolution_m: float = 1.0) -> Path:
+def fetch_dtm_raster(bbox: tuple, resolution_m: float = 5.0) -> Optional[Path]:
     """
-    Download 1m bare-earth DEM from Maryland iMAP as GeoTIFF.
-    Returns path to downloaded .tif file.
+    Download bare-earth DEM from Maryland iMAP as GeoTIFF.
+    Requests at 5m resolution (safe for the service, sufficient for nDSM).
+    Returns path to final .tif, or None on failure.
     """
     print("\n[2/5] Fetching DTM from Maryland iMAP Baltimore City DEM…")
     w, s, e, n = bbox
 
-    # Estimate pixel dimensions (at 1m, ~1 pixel per meter)
-    lat_rad = math.radians((s + n) / 2)
+    lat_rad       = math.radians((s + n) / 2)
     m_per_deg_lng = 111320 * math.cos(lat_rad)
     m_per_deg_lat = 111132
-    width_px  = min(15000, int((e - w) * m_per_deg_lng / resolution_m))
-    height_px = min(4100,  int((n - s) * m_per_deg_lat / resolution_m))
+    total_w_px    = min(2048, int((e - w) * m_per_deg_lng / resolution_m))
+    total_h_px    = min(2048, int((n - s) * m_per_deg_lat / resolution_m))
+
+    bbox_tag = f"{abs(w):.3f}_{s:.3f}_{abs(e):.3f}_{n:.3f}".replace(".", "")
+    out_path = LAZ_CACHE / f"dtm_{bbox_tag}.tif"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if out_path.exists():
+        print(f"  Using cached DTM: {out_path}")
+        return out_path
 
     params = {
         "bbox":        f"{w},{s},{e},{n}",
         "bboxSR":      "4326",
-        "size":        f"{width_px},{height_px}",
+        "size":        f"{total_w_px},{total_h_px}",
         "imageSR":     "4326",
         "format":      "tiff",
         "pixelType":   "F32",
@@ -274,314 +211,376 @@ def fetch_dtm_raster(bbox: tuple, resolution_m: float = 1.0) -> Path:
         "f":           "image",
     }
 
-    # Use bbox-specific filename so expanded runs don't reuse the old small raster
-    bbox_tag = f"{abs(bbox[0]):.3f}_{bbox[1]:.3f}_{abs(bbox[2]):.3f}_{bbox[3]:.3f}".replace(".", "")
-    out_path = LAZ_CACHE / f"dtm_{bbox_tag}.tif"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not out_path.exists():
-        print(f"  Requesting {width_px}×{height_px}px raster…")
+    print(f"  Requesting DTM ({total_w_px}×{total_h_px}px at {resolution_m}m resolution)…")
+    try:
         resp = requests.get(MD_IMAP_DEM_URL, params=params, timeout=120, stream=True)
         resp.raise_for_status()
-        content_type = resp.headers.get("content-type", "")
-        if "html" in content_type.lower():
-            raise RuntimeError(f"DTM endpoint returned HTML — likely deprecated or wrong URL.\n{resp.url}")
-        with open(out_path, "wb") as f:
+        if "html" in resp.headers.get("content-type", "").lower():
+            raise RuntimeError("DTM endpoint returned HTML — check URL")
+        with open(out_path, "wb") as f_out:
             for chunk in resp.iter_content(1 << 16):
-                f.write(chunk)
+                f_out.write(chunk)
         size_kb = out_path.stat().st_size // 1024
         if size_kb < 10:
             out_path.unlink()
-            raise RuntimeError(f"DTM raster too small ({size_kb} KB) — endpoint may have failed silently")
+            raise RuntimeError(f"Response too small ({size_kb} KB)")
         print(f"  → DTM saved: {out_path} ({size_kb} KB)")
-    else:
-        print(f"  Using cached DTM: {out_path}")
-
-    return out_path
-
-
-# ── Step 3: DSM — USGS LAZ → first-return surface model ──────────────────────
-
-def download_laz_tiles(target_dir: Path) -> list[Path]:
-    """Download the USGS LAZ tiles for our study area."""
-    print("\n[3/5] Downloading USGS MD_4County_D24 LAZ tiles…")
-    target_dir.mkdir(parents=True, exist_ok=True)
-    downloaded = []
-    for tile in USGS_LAZ_TILES:
-        out = target_dir / tile
-        if out.exists():
-            print(f"  ✓ cached  {tile}")
-            downloaded.append(out)
-            continue
-        url = USGS_LAZ_BASE + tile
-        print(f"  ↓ {tile}")
-        with requests.get(url, stream=True, timeout=300) as r:
-            if r.status_code == 404:
-                print(f"    (not found — skipping)")
-                continue
-            r.raise_for_status()
-            total = int(r.headers.get("content-length", 0))
-            with open(out, "wb") as f, tqdm(total=total, unit="B", unit_scale=True, leave=False) as bar:
-                for chunk in r.iter_content(1 << 16):
-                    f.write(chunk)
-                    bar.update(len(chunk))
-        downloaded.append(out)
-    print(f"  → {len(downloaded)} tiles ready")
-    return downloaded
+        return out_path
+    except Exception as e:
+        print(f"  ⚠ DTM failed: {e}")
+        out_path.unlink(missing_ok=True)
+        return None
 
 
-def build_dsm_with_pdal(laz_files: list[Path], out_path: Path, bbox: tuple) -> Optional[Path]:
+# ── Step 3: DSM — NOAA COPC LAZ tiles (streaming or download+delete) ──────────
+
+def _bbox_wgs84_to_projected(bbox, epsg_out=32618):
+    """Convert WGS84 bbox to projected meters."""
+    from pyproj import Transformer
+    t = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg_out}", always_xy=True)
+    w, s, e, n = bbox
+    xmin, ymin = t.transform(w, s)
+    xmax, ymax = t.transform(e, n)
+    return xmin, ymin, xmax, ymax
+
+
+def _las_header_bbox(url: str) -> Optional[tuple]:
     """
-    Use PDAL to create a 1m first-return DSM from LAZ tiles.
-    Returns path to DSM GeoTIFF, or None if PDAL unavailable.
+    Read the first 256 bytes of a LAS/COPC file via HTTP Range request
+    to extract its X/Y bounding box (stored as 8-byte doubles in the LAS header).
+    Returns (xmin, ymin, xmax, ymax) in the file's native CRS, or None on failure.
+    """
+    import struct
+    try:
+        resp = requests.get(url, headers={"Range": "bytes=0-255"}, timeout=15)
+        if resp.status_code not in (200, 206) or len(resp.content) < 243:
+            return None
+        raw = resp.content
+        # LAS 1.x header (LAS 1.2–1.4), little-endian doubles:
+        # offset 179: Max X, 187: Min X, 195: Max Y, 203: Min Y
+        max_x, min_x, max_y, min_y = struct.unpack_from('<dddd', raw, 179)
+        return (min_x, min_y, max_x, max_y)
+    except Exception:
+        return None
+
+
+def fetch_noaa_tile_list(bbox: tuple) -> list[str]:
+    """
+    List all COPC LAZ tiles in the NOAA S3 bucket via the S3 ListObjects API,
+    then filter to tiles whose bounding box overlaps our study bbox using
+    HTTP Range requests on the LAS header (no full download).
+    Returns list of matching tile URLs.
+    """
+    print("  Listing NOAA S3 tiles…")
+    w, s, e, n = bbox
+
+    # 1. List all tile keys via S3 XML API
+    s3_list_url = "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/?prefix=laz/geoid18/1199/&delimiter=/"
+    resp = requests.get(s3_list_url, timeout=30)
+    resp.raise_for_status()
+    import re
+    keys = re.findall(r'<Key>(laz/geoid18/1199/[^<]+\.laz)</Key>', resp.text)
+    all_urls = [f"https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/{k}" for k in keys]
+    print(f"  → {len(all_urls)} tiles in bucket — reading headers to filter by bbox…")
+
+    # 2. Read LAS header from each tile (256 bytes via Range request) to get bbox
+    xmin_b, ymin_b, xmax_b, ymax_b = _bbox_wgs84_to_projected(bbox)
+    matching = []
+    for url in all_urls:
+        tile_bbox = _las_header_bbox(url)
+        if tile_bbox is None:
+            matching.append(url)  # can't determine — include it
+            continue
+        tx_min, ty_min, tx_max, ty_max = tile_bbox
+        # Determine if projected (large numbers) or geographic
+        if abs(tx_min) > 1000:
+            bx_min, by_min, bx_max, by_max = xmin_b, ymin_b, xmax_b, ymax_b
+        else:
+            bx_min, by_min, bx_max, by_max = w, s, e, n
+        if tx_min <= bx_max and tx_max >= bx_min and ty_min <= by_max and ty_max >= by_min:
+            matching.append(url)
+
+    print(f"  → {len(matching)} tiles overlap study bbox")
+    return matching
+
+
+def build_dsm_copc_pdal(tile_urls: list[str], out_path: Path, bbox: tuple) -> Optional[Path]:
+    """
+    Use PDAL COPC reader to stream ONLY bbox points from each tile over HTTP.
+    No full tile download — COPC spatial index handles it.
+    Extracts first returns (DSM = surface including rooftops).
     """
     try:
         import pdal
     except ImportError:
-        print("  PDAL not installed — skipping LAZ-based DSM. Run: pip install pdal")
+        print("  PDAL not installed — falling back to download+delete method.")
         return None
 
-    print(f"\n  Building DSM from {len(laz_files)} LAZ tiles with PDAL…")
-    w, s, e, n = bbox
-
-    # Convert bbox to UTM 18N for PDAL crop filter
     from pyproj import Transformer
     t = Transformer.from_crs("EPSG:4326", "EPSG:32618", always_xy=True)
-    west_m, south_m = t.transform(w, s)
-    east_m, north_m = t.transform(e, n)
+    w, s, e, n = bbox
+    xmin, ymin = t.transform(w, s)
+    xmax, ymax = t.transform(e, n)
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"\n  Streaming {len(tile_urls)} COPC tiles via PDAL (no full download)…")
 
-    readers = [{"type": "readers.las", "filename": str(p)} for p in laz_files]
+    all_xyz = []
+    for url in tile_urls:
+        fname = url.split("/")[-1]
+        print(f"    → {fname}")
+        pipeline_def = [
+            {
+                "type": "readers.copc",
+                "filename": url,
+                "bounds": f"([{xmin:.1f},{xmax:.1f}],[{ymin:.1f},{ymax:.1f}])",
+            },
+            # First returns only
+            {"type": "filters.range", "limits": "ReturnNumber[1:1]"},
+        ]
+        try:
+            pipeline = pdal.Pipeline(json.dumps(pipeline_def))
+            n_pts = pipeline.execute()
+            if n_pts == 0:
+                continue
+            arr = pipeline.arrays[0]
+            xs  = arr["X"].astype(np.float32)
+            ys  = arr["Y"].astype(np.float32)
+            zs  = arr["Z"].astype(np.float32)
+            in_bbox = (xs >= xmin) & (xs <= xmax) & (ys >= ymin) & (ys <= ymax)
+            all_xyz.append((xs[in_bbox], ys[in_bbox], zs[in_bbox]))
+            print(f"       {int(in_bbox.sum()):,} points in bbox")
+        except Exception as e:
+            print(f"       ⚠ skipped: {e}")
 
-    pipeline_def = [
-        *readers,
-        # Merge tiles
-        {"type": "filters.merge"},
-        # Crop to bbox (in UTM 18N)
-        {
-            "type": "filters.crop",
-            "bounds": f"([{west_m:.0f},{east_m:.0f}],[{south_m:.0f},{north_m:.0f}])",
-        },
-        # Keep only first returns
-        {"type": "filters.range", "limits": "returnnumber[1:1]"},
-        # Write DSM: project to WGS84 on output
-        {
-            "type": "writers.gdal",
-            "filename": str(out_path),
-            "resolution": 1.0,
-            "output_type": "max",  # highest first-return = rooftop
-            "data_type": "float32",
-            "nodata": -9999,
-            "gdalopts": "COMPRESS=LZW",
-        },
-    ]
-
-    try:
-        pipeline = pdal.Pipeline(json.dumps(pipeline_def))
-        pipeline.execute()
-        print(f"  → DSM written: {out_path}")
-        return out_path
-    except Exception as e:
-        print(f"  PDAL pipeline failed: {e}")
+    if not all_xyz:
+        print("  No points returned from any tile.")
         return None
 
+    xs = np.concatenate([a[0] for a in all_xyz])
+    ys = np.concatenate([a[1] for a in all_xyz])
+    zs = np.concatenate([a[2] for a in all_xyz])
+    return _write_dsm_raster(xs, ys, zs, xmin, ymin, xmax, ymax, out_path)
 
-def build_dsm_with_laspy(laz_files: list[Path], out_path: Path, bbox: tuple) -> Optional[Path]:
+
+def build_dsm_download_delete(tile_urls: list[str], out_path: Path, bbox: tuple) -> Optional[Path]:
     """
-    Fallback DSM builder using laspy (no PDAL dependency).
-    Bins first-return Z values into a 1m raster via numpy.
+    Download each COPC/LAZ tile one at a time, extract bbox first-return points
+    with laspy, then immediately delete the raw tile. Stitches results into one DSM.
     """
     try:
         import laspy
     except ImportError:
-        print("  laspy not installed either — cannot build DSM from LAZ.")
+        print("  laspy not installed. Run: pip install laspy lazrs-python")
         return None
 
     from pyproj import Transformer
+    t = Transformer.from_crs("EPSG:4326", "EPSG:32618", always_xy=True)
+    w, s, e, n = bbox
+    xmin, ymin = t.transform(w, s)
+    xmax, ymax = t.transform(e, n)
+
+    print(f"\n  Downloading {len(tile_urls)} tiles (process → delete strategy)…")
+    LAZ_CACHE.mkdir(parents=True, exist_ok=True)
+
+    all_xyz = []
+    for url in tile_urls:
+        fname    = url.split("/")[-1]
+        tmp_path = LAZ_CACHE / fname
+        print(f"\n  ↓ {fname}")
+        try:
+            with requests.get(url, stream=True, timeout=300) as r:
+                r.raise_for_status()
+                total = int(r.headers.get("content-length", 0))
+                with open(tmp_path, "wb") as f, tqdm(total=total, unit="B", unit_scale=True, leave=False) as bar:
+                    for chunk in r.iter_content(1 << 16):
+                        f.write(chunk)
+                        bar.update(len(chunk))
+
+            size_mb = tmp_path.stat().st_size // (1024 * 1024)
+            print(f"    Downloaded {size_mb} MB — extracting points…")
+
+            with laspy.open(str(tmp_path)) as lf:
+                las = lf.read()
+                # First returns
+                ret = np.asarray(las.return_number)
+                mask = (ret == 1)
+                xs = np.asarray(las.x, dtype=np.float32)[mask]
+                ys = np.asarray(las.y, dtype=np.float32)[mask]
+                zs = np.asarray(las.z, dtype=np.float32)[mask]
+                in_bbox = (xs >= xmin) & (xs <= xmax) & (ys >= ymin) & (ys <= ymax)
+                xs, ys, zs = xs[in_bbox], ys[in_bbox], zs[in_bbox]
+                print(f"    {len(xs):,} first-return points in bbox")
+                if len(xs) > 0:
+                    all_xyz.append((xs, ys, zs))
+
+        except Exception as e:
+            print(f"  ⚠ Failed: {e}")
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
+                print(f"    Deleted {fname}")
+
+    if not all_xyz:
+        print("  No points collected.")
+        return None
+
+    xs = np.concatenate([a[0] for a in all_xyz])
+    ys = np.concatenate([a[1] for a in all_xyz])
+    zs = np.concatenate([a[2] for a in all_xyz])
+    return _write_dsm_raster(xs, ys, zs, xmin, ymin, xmax, ymax, out_path)
+
+
+def _write_dsm_raster(xs, ys, zs, xmin, ymin, xmax, ymax, out_path: Path) -> Optional[Path]:
+    """Bin point cloud first-return Z into a 1m DSM raster, save as GeoTIFF."""
     import rasterio
     from rasterio.transform import from_origin
     from rasterio.crs import CRS
 
-    print(f"\n  Building DSM with laspy (no-PDAL fallback)…")
-    w, s, e, n = bbox
-
-    t_fwd = Transformer.from_crs("EPSG:4326", "EPSG:32618", always_xy=True)
-    t_inv = Transformer.from_crs("EPSG:32618", "EPSG:4326", always_xy=True)
-    xmin, ymin = t_fwd.transform(w, s)
-    xmax, ymax = t_fwd.transform(e, n)
-
-    res = 1.0  # 1m pixels
+    res  = 1.0
     cols = int((xmax - xmin) / res) + 1
     rows = int((ymax - ymin) / res) + 1
-    dsm_grid = np.full((rows, cols), -9999.0, dtype=np.float32)
 
-    for laz_path in laz_files:
-        print(f"    Processing {laz_path.name}…")
-        try:
-            with laspy.open(str(laz_path), laz_backend=laspy.LazBackend.Laszip) as f:
-                las = f.read()
-                mask = np.asarray(las.return_number) == 1
-                xs = np.asarray(las.x)[mask]
-                ys = np.asarray(las.y)[mask]
-                zs = np.asarray(las.z)[mask]
-                in_bbox = (xs >= xmin) & (xs <= xmax) & (ys >= ymin) & (ys <= ymax)
-                xs, ys, zs = xs[in_bbox], ys[in_bbox], zs[in_bbox]
-                if len(xs) > 0:
-                    col_idx = np.clip(((xs - xmin) / res).astype(np.int32), 0, cols - 1)
-                    row_idx = np.clip(((ymax - ys) / res).astype(np.int32), 0, rows - 1)
-                    flat = row_idx * cols + col_idx
-                    np.maximum.at(dsm_grid.ravel(), flat, zs.astype(np.float32))
-        except Exception as e:
-            print(f"    Warning: {e}")
+    print(f"\n  Building DSM raster ({cols}×{rows}px, {len(xs):,} points)…")
+    dsm = np.full((rows, cols), -9999.0, dtype=np.float32)
 
-    transform = from_origin(xmin, ymax, res, res)
+    col_idx = np.clip(((xs - xmin) / res).astype(np.int32), 0, cols - 1)
+    row_idx = np.clip(((ymax - ys) / res).astype(np.int32), 0, rows - 1)
+    flat    = row_idx * cols + col_idx
+    np.maximum.at(dsm.ravel(), flat, zs)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    transform = from_origin(xmin, ymax, res, res)
     with rasterio.open(
-        str(out_path), "w", driver="GTiff", height=rows, width=cols,
-        count=1, dtype="float32", crs=CRS.from_epsg(32618),
-        transform=transform, nodata=-9999,
+        str(out_path), "w", driver="GTiff",
+        height=rows, width=cols, count=1, dtype="float32",
+        crs=CRS.from_epsg(32618), transform=transform, nodata=-9999,
+        compress="lzw",
     ) as dst:
-        dst.write(dsm_grid, 1)
+        dst.write(dsm, 1)
 
-    print(f"  → DSM written: {out_path}")
+    size_mb = out_path.stat().st_size // (1024 * 1024)
+    print(f"  → DSM written: {out_path} ({size_mb} MB)")
     return out_path
 
 
 # ── Step 4: Building heights via zonal statistics ─────────────────────────────
 
-def sample_height_at_centroid(lon: float, lat: float, raster_path: Path) -> Optional[float]:
-    """Read the raster value at a single point (lon, lat)."""
+def compute_zonal_heights(footprints_gdf, dsm_path: Path, dtm_path: Path) -> list:
     import rasterio
-    from pyproj import Transformer
-
-    with rasterio.open(str(raster_path)) as src:
-        # Reproject point to raster CRS if needed
-        if src.crs and src.crs.to_epsg() != 4326:
-            t = Transformer.from_crs("EPSG:4326", src.crs.to_epsg(), always_xy=True)
-            x, y = t.transform(lon, lat)
-        else:
-            x, y = lon, lat
-
-        row, col = src.index(x, y)
-        if 0 <= row < src.height and 0 <= col < src.width:
-            val = src.read(1)[row, col]
-            if val != src.nodata and val > -9000:
-                return float(val)
-    return None
-
-
-def compute_zonal_heights(footprints_gdf, dsm_path: Path, dtm_path: Path) -> "pd.Series":
-    """
-    Compute max nDSM (= DSM - DTM) height for each building polygon.
-    Uses rasterstats.zonal_stats when available, falls back to centroid sampling.
-    """
-    import rasterio
-    from pyproj import Transformer
-
-    print("\n[4/5] Computing building heights from nDSM…")
+    print("\n[4/5] Computing building heights from nDSM (DSM − DTM)…")
 
     try:
         from rasterstats import zonal_stats
+        from scipy.ndimage import zoom as scipy_zoom
 
-        with rasterio.open(str(dsm_path)) as dsm, rasterio.open(str(dtm_path)) as dtm:
-            dsm_arr = dsm.read(1).astype(np.float32)
-            dtm_arr = dtm.read(1).astype(np.float32)
+        from rasterio.warp import reproject, Resampling
 
-            # Resample DTM to DSM grid if needed (simple nearest neighbor)
-            if dsm_arr.shape != dtm_arr.shape:
-                from scipy.ndimage import zoom
-                sx = dsm_arr.shape[1] / dtm_arr.shape[1]
-                sy = dsm_arr.shape[0] / dtm_arr.shape[0]
-                dtm_arr = zoom(dtm_arr, (sy, sx), order=1)
+        with rasterio.open(str(dsm_path)) as dsm_src:
+            dsm_arr   = dsm_src.read(1).astype(np.float32)
+            dsm_crs   = dsm_src.crs
+            dsm_trans = dsm_src.transform
+            dsm_shape = (dsm_src.height, dsm_src.width)
+            dsm_nodata = dsm_src.nodata or -9999
 
-            ndsm = np.where(
-                (dsm_arr > -9000) & (dtm_arr > -9000),
-                dsm_arr - dtm_arr,
-                -9999,
-            ).astype(np.float32)
+        # Warp DTM into DSM's CRS, extent, and resolution
+        dtm_warped = np.full(dsm_shape, -9999.0, dtype=np.float32)
+        with rasterio.open(str(dtm_path)) as dtm_src:
+            reproject(
+                source=rasterio.band(dtm_src, 1),
+                destination=dtm_warped,
+                src_transform=dtm_src.transform,
+                src_crs=dtm_src.crs,
+                dst_transform=dsm_trans,
+                dst_crs=dsm_crs,
+                resampling=Resampling.bilinear,
+                src_nodata=dtm_src.nodata or -9999,
+                dst_nodata=-9999,
+            )
 
-            # Write nDSM to temp file for rasterstats
-            ndsm_path = LAZ_CACHE / "ndsm.tif"
-            profile = dsm.profile.copy()
-            profile.update(nodata=-9999)
-            with rasterio.open(str(ndsm_path), "w", **profile) as out:
-                out.write(ndsm, 1)
+        ndsm = np.where(
+            (dsm_arr > -9000) & (dtm_warped > -9000),
+            dsm_arr - dtm_warped,
+            -9999,
+        ).astype(np.float32)
 
-        # Reproject footprints to DSM CRS for zonal_stats
+        ndsm_path = LAZ_CACHE / "ndsm.tif"
+        with rasterio.open(
+            str(ndsm_path), "w", driver="GTiff",
+            height=dsm_shape[0], width=dsm_shape[1],
+            count=1, dtype="float32", crs=dsm_crs,
+            transform=dsm_trans, nodata=-9999, compress="lzw",
+        ) as out:
+            out.write(ndsm, 1)
+
         import geopandas as gpd
-        with rasterio.open(str(ndsm_path)) as _ndsm_src:
-            raster_crs = _ndsm_src.crs.to_string()
-        geom_projected = footprints_gdf.to_crs(raster_crs).geometry
+        with rasterio.open(str(ndsm_path)) as src:
+            raster_crs = src.crs.to_string()
+        geom_proj = footprints_gdf.to_crs(raster_crs).geometry
 
-        stats = zonal_stats(
-            geom_projected,
-            str(ndsm_path),
-            stats=["max", "mean", "std"],
-            nodata=-9999,
-            all_touched=True,
-        )
-        heights = [
-            max(0.0, s["max"] or 0) if s["max"] is not None else 0.0
-            for s in stats
-        ]
-        print(f"  → Heights computed for {sum(h > 0 for h in heights)}/{len(heights)} buildings")
+        stats = zonal_stats(geom_proj, str(ndsm_path), stats=["max"], nodata=-9999, all_touched=True)
+        heights = [max(0.0, s["max"] or 0) if s.get("max") is not None else 0.0 for s in stats]
+        n_lidar = sum(h > 1 for h in heights)
+        print(f"  → LiDAR heights: {n_lidar}/{len(heights)} buildings")
         return heights
 
-    except ImportError:
-        print("  rasterstats not available — using centroid sampling fallback")
+    except ImportError as ie:
+        print(f"  rasterstats/scipy unavailable ({ie}) — centroid sampling fallback")
 
-    # Fallback: sample DSM and DTM at footprint centroids
+    from pyproj import Transformer
     t = Transformer.from_crs("EPSG:4326", "EPSG:32618", always_xy=True)
+
+    def sample(lon, lat, raster_path):
+        with rasterio.open(str(raster_path)) as src:
+            epsg = src.crs.to_epsg() if src.crs else 4326
+            if epsg != 4326:
+                tx = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
+                x, y = tx.transform(lon, lat)
+            else:
+                x, y = lon, lat
+            r, c = src.index(x, y)
+            if 0 <= r < src.height and 0 <= c < src.width:
+                v = src.read(1)[r, c]
+                if v != src.nodata and v > -9000:
+                    return float(v)
+        return None
+
     heights = []
     for geom in footprints_gdf.geometry:
         cx, cy = geom.centroid.x, geom.centroid.y
-        dsm_z = sample_height_at_centroid(cx, cy, dsm_path)
-        dtm_z = sample_height_at_centroid(cx, cy, dtm_path)
-        if dsm_z is not None and dtm_z is not None:
-            heights.append(max(0.0, dsm_z - dtm_z))
-        else:
-            heights.append(0.0)
+        dsm_z = sample(cx, cy, dsm_path)
+        dtm_z = sample(cx, cy, dtm_path)
+        heights.append(max(0.0, dsm_z - dtm_z) if dsm_z and dtm_z else 0.0)
     return heights
 
 
 # ── Step 5: Parcel spatial join ───────────────────────────────────────────────
 
 def join_parcels(footprints_gdf) -> "gpd.GeoDataFrame":
-    """Spatial join: assign BLOCKLOT / address from local parcel GeoJSON."""
     parcel_path = ROOT / "data" / "Real_Property_Information.geojson"
     if not parcel_path.exists():
         print("\n[5/5] Parcel file not found — skipping parcel join.")
-        footprints_gdf["BLOCKLOT"] = ""
-        footprints_gdf["ADDRESS"] = ""
-        footprints_gdf["OWNER"] = ""
+        for col in ("BLOCKLOT", "ADDRESS", "OWNER"):
+            footprints_gdf[col] = ""
         footprints_gdf["ARTAXBAS"] = 0
         return footprints_gdf
 
     print("\n[5/5] Joining with Baltimore parcel data…")
-
     import geopandas as gpd
 
-    print("  Reading parcel GeoJSON (563 MB — may take 30s)…")
     parcels = gpd.read_file(str(parcel_path))
     parcels = parcels[["BLOCKLOT", "FULLADDR", "OWNER_1", "ARTAXBAS", "geometry"]]
     parcels = parcels.rename(columns={"FULLADDR": "ADDRESS", "OWNER_1": "OWNER"})
     parcels = parcels[parcels.geometry.notna()]
-
-    # Ensure same CRS
     if parcels.crs != footprints_gdf.crs:
         parcels = parcels.to_crs(footprints_gdf.crs)
 
-    # Centroid join: building centroid within which parcel?
     centroids = footprints_gdf.copy()
     centroids.geometry = footprints_gdf.to_crs("EPSG:32618").centroid.to_crs(footprints_gdf.crs)
-
     joined = gpd.sjoin(centroids, parcels, how="left", predicate="within")
-    # Deduplicate: keep first match per building
     joined = joined[~joined.index.duplicated(keep="first")]
-    footprints_gdf["BLOCKLOT"] = joined["BLOCKLOT"].reindex(footprints_gdf.index).fillna("")
-    footprints_gdf["ADDRESS"]  = joined["ADDRESS"].reindex(footprints_gdf.index).fillna("")
-    footprints_gdf["OWNER"]    = joined["OWNER"].reindex(footprints_gdf.index).fillna("")
+
+    for col in ("BLOCKLOT", "ADDRESS", "OWNER"):
+        footprints_gdf[col] = joined[col].reindex(footprints_gdf.index).fillna("")
     footprints_gdf["ARTAXBAS"] = joined["ARTAXBAS"].reindex(footprints_gdf.index).fillna(0)
 
     matched = (footprints_gdf["BLOCKLOT"] != "").sum()
@@ -591,12 +590,27 @@ def join_parcels(footprints_gdf) -> "gpd.GeoDataFrame":
 
 # ── Export ────────────────────────────────────────────────────────────────────
 
-def export_geojson(gdf, out_path: Path):
-    """Write deck.gl-ready GeoJSON with height property."""
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+def heuristic_height(row) -> tuple:
+    h = float(row.get("osm_height_m", 0) or 0)
+    if h > 0:
+        return h, "osm_tag"
+    btype = str(row.get("building", "")).lower()
+    defaults = {
+        "industrial": 12.0, "warehouse": 10.0, "commercial": 8.0,
+        "office": 30.0, "hotel": 25.0, "retail": 6.0,
+        "apartments": 15.0, "residential": 8.0, "church": 12.0,
+        "school": 10.0, "garage": 4.0, "shed": 3.0,
+    }
+    for k, v in defaults.items():
+        if k in btype:
+            return v, "type_heuristic"
+    return 6.0, "default"
 
+
+def export_geojson(gdf, out_path: Path):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     features = []
-    for idx, row in gdf.iterrows():
+    for _, row in gdf.iterrows():
         if row.geometry is None or row.geometry.is_empty:
             continue
         h = float(row.get("height_m", 0) or 0)
@@ -620,11 +634,11 @@ def export_geojson(gdf, out_path: Path):
     geojson = {
         "type": "FeatureCollection",
         "metadata": {
-            "generated":       __import__("datetime").datetime.utcnow().isoformat() + "Z",
-            "bbox":            list(BBOX),
-            "height_source":   "lidar_ndsm (USGS 3DEP 1m + cached LAZ) / heuristic fallback",
+            "generated":        __import__("datetime").datetime.utcnow().isoformat() + "Z",
+            "bbox":             list(BBOX),
+            "height_source":    "NOAA 2008 Baltimore LiDAR (COPC) / MD iMAP DTM / heuristic fallback",
             "footprint_source": "OSM Overpass / Baltimore City Buildings_Footprint.geojson",
-            "feature_count":   len(features),
+            "feature_count":    len(features),
         },
         "features": features,
     }
@@ -637,28 +651,19 @@ def export_geojson(gdf, out_path: Path):
     print(f"  {len(features)} features  |  {size_kb} KB")
 
 
-# ── Main pipeline modes ───────────────────────────────────────────────────────
+# ── Main pipeline ─────────────────────────────────────────────────────────────
 
-def run_quick(footprint_source: str = "osm"):
-    """
-    Quick mode:
-    - OSM footprints (or Microsoft)
-    - MD iMAP DTM for ground elevation
-    - Heights estimated from OSM tags, or use DTM as a lower-bound signal
-    - No LAZ download required
-    """
+def run(footprint_source: str = "osm", force_download: bool = False):
     import geopandas as gpd
     from shapely.geometry import shape
 
     print("\n" + "=" * 60)
-    print("  3Dtimore Building Pipeline — QUICK MODE")
-    print("  (OSM footprints + USGS LAZ tiles + DTM → real nDSM heights)")
+    print("  3Dtimore Building Pipeline")
+    print("  NOAA 2008 Baltimore COPC LiDAR + MD iMAP DTM")
     print("=" * 60)
 
     # 1. Footprints
-    if footprint_source == "microsoft":
-        fc = fetch_microsoft_footprints(BBOX)
-    elif footprint_source == "baltimore":
+    if footprint_source == "baltimore":
         fc = fetch_baltimore_footprints(BBOX)
     else:
         fc = fetch_osm_footprints(BBOX)
@@ -668,48 +673,41 @@ def run_quick(footprint_source: str = "osm"):
 
     gdf = gpd.GeoDataFrame.from_features(fc["features"], crs="EPSG:4326")
 
-    # 2. DTM (bare-earth ground elevation from USGS 3DEP)
-    try:
-        dtm_path = fetch_dtm_raster(BBOX)
-    except Exception as dtm_err:
-        print(f"  ⚠ DTM unavailable ({dtm_err}), will use OSM heuristics only.")
-        dtm_path = None
+    # 2. DTM (bare earth) — Maryland iMAP, tiled
+    dtm_path = fetch_dtm_raster(BBOX)
+    if dtm_path is None:
+        print("  ⚠ DTM unavailable — will use OSM heuristics only.")
 
-    # 3. DSM (first-return surface) from USGS LAZ tiles — same tiles as full mode,
-    #    but cached after first run (~326 MB total, ~30 MB per tile)
-    dsm_path = LAZ_CACHE / "dsm_locustpoint.tif"
+    # 3. DSM (first-return surface) — NOAA COPC
+    dsm_path   = LAZ_CACHE / "dsm_noaa_baltimore.tif"
     laz_heights = None
 
+    if force_download and dsm_path.exists():
+        dsm_path.unlink()
+
     if dtm_path is not None:
-        try:
-            laz_files = download_laz_tiles(LAZ_CACHE)
-            if laz_files:
-                if not dsm_path.exists():
-                    dsm_path = build_dsm_with_laspy(laz_files, dsm_path, BBOX)
-                else:
-                    print(f"\n[3/5] Using cached DSM: {dsm_path}")
+        if dsm_path.exists():
+            print(f"\n[3/5] Using cached DSM: {dsm_path}")
+        else:
+            print("\n[3/5] Building DSM from NOAA COPC LiDAR…")
+            try:
+                tile_urls = fetch_noaa_tile_list(BBOX)
+                # Try PDAL streaming first (no download), then download+delete fallback
+                result = build_dsm_copc_pdal(tile_urls, dsm_path, BBOX)
+                if result is None:
+                    result = build_dsm_download_delete(tile_urls, dsm_path, BBOX)
+                if result is None:
+                    print("  ⚠ DSM build failed — will use heuristics.")
+            except Exception as e:
+                print(f"  ⚠ DSM step failed: {e}")
+
+        if dsm_path.exists() and dtm_path is not None:
+            try:
                 laz_heights = compute_zonal_heights(gdf, dsm_path, dtm_path)
-        except Exception as laz_err:
-            print(f"  ⚠ LAZ pipeline failed ({laz_err}), falling back to OSM heuristics.")
-            laz_heights = None
+            except Exception as e:
+                print(f"  ⚠ Height computation failed: {e}")
 
-    # 4. Assign heights: LiDAR nDSM → OSM tag → building-type heuristic
-    def heuristic_height(row):
-        h_osm = float(row.get("osm_height_m", 0) or 0)
-        if h_osm > 0:
-            return h_osm, "osm_tag"
-        btype = str(row.get("building", "")).lower()
-        defaults = {
-            "industrial": 12.0, "warehouse": 10.0, "commercial": 8.0,
-            "office": 30.0, "hotel": 25.0, "retail": 6.0,
-            "apartments": 15.0, "residential": 8.0, "church": 12.0,
-            "school": 10.0, "garage": 4.0, "shed": 3.0,
-        }
-        for k, v in defaults.items():
-            if k in btype:
-                return v, "type_heuristic"
-        return 6.0, "default"
-
+    # 4. Assign heights: LiDAR → OSM tag → type heuristic
     heights, sources = [], []
     for i, (_, row) in enumerate(gdf.iterrows()):
         lidar_h = laz_heights[i] if laz_heights is not None else 0.0
@@ -721,74 +719,11 @@ def run_quick(footprint_source: str = "osm"):
             heights.append(h)
             sources.append(src)
 
-    lidar_count = sources.count("lidar_ndsm")
-    print(f"\n  Heights: {lidar_count} LiDAR-derived, {len(heights) - lidar_count} heuristic")
+    n_lidar = sources.count("lidar_ndsm")
+    print(f"\n  Heights: {n_lidar} LiDAR-derived, {len(heights) - n_lidar} heuristic")
 
-    gdf["height_m"] = heights
+    gdf["height_m"]      = heights
     gdf["height_source"] = sources
-
-    # 5. Parcel join
-    gdf = join_parcels(gdf)
-
-    # 6. Export
-    export_geojson(gdf, OUT_FILE)
-
-
-def run_full(laz_dir: Optional[Path] = None, footprint_source: str = "osm"):
-    """
-    Full LiDAR pipeline:
-    - Download USGS LAZ tiles (if not cached / provided)
-    - Build 1m DSM from first returns using PDAL (or laspy fallback)
-    - Download MD iMAP 1m DTM
-    - nDSM = DSM - DTM → building heights via zonal statistics
-    """
-    import geopandas as gpd
-
-    print("\n" + "=" * 60)
-    print("  3Dtimore Building Pipeline — FULL LiDAR MODE")
-    print("  USGS MD_4County_D24 (2024) + MD iMAP DTM")
-    print("=" * 60)
-
-    # 1. Footprints
-    if footprint_source == "microsoft":
-        fc = fetch_microsoft_footprints(BBOX)
-    elif footprint_source == "baltimore":
-        fc = fetch_baltimore_footprints(BBOX)
-    else:
-        fc = fetch_osm_footprints(BBOX)
-
-    gdf = gpd.GeoDataFrame.from_features(fc["features"], crs="EPSG:4326")
-
-    # 2. DTM
-    dtm_path = fetch_dtm_raster(BBOX)
-
-    # 3. DSM from LAZ
-    laz_cache = laz_dir or (LAZ_CACHE / "usgs_laz")
-    laz_files = download_laz_tiles(laz_cache)
-
-    dsm_path = LAZ_CACHE / "dsm.tif"
-    if not dsm_path.exists():
-        result = build_dsm_with_pdal(laz_files, dsm_path, BBOX)
-        if result is None:
-            print("  PDAL unavailable — trying laspy fallback…")
-            result = build_dsm_with_laspy(laz_files, dsm_path, BBOX)
-        if result is None:
-            print("  Cannot build DSM. Falling back to quick mode heights.")
-            for _, row in gdf.iterrows():
-                gdf["height_m"] = 6.0
-                gdf["height_source"] = "fallback"
-            gdf = join_parcels(gdf)
-            export_geojson(gdf, OUT_FILE)
-            return
-    else:
-        print(f"\n[3/5] Using cached DSM: {dsm_path}")
-
-    # 4. Zonal statistics → heights
-    heights = compute_zonal_heights(gdf, dsm_path, dtm_path)
-    gdf["height_m"] = heights
-    gdf["height_source"] = [
-        "lidar_ndsm" if h > 0 else "no_data" for h in heights
-    ]
 
     # 5. Parcel join
     gdf = join_parcels(gdf)
@@ -801,27 +736,19 @@ def run_full(laz_dir: Optional[Path] = None, footprint_source: str = "osm"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="3Dtimore building footprint + LiDAR height pipeline"
+        description="3Dtimore building footprint + NOAA LiDAR height pipeline"
     )
     parser.add_argument(
-        "--mode", choices=["quick", "full"], default="quick",
-        help="quick = OSM + heuristic heights (no LAZ); full = USGS LAZ + nDSM (accurate)"
+        "--footprints", choices=["osm", "baltimore"], default="osm",
+        help="Building footprint source"
     )
     parser.add_argument(
-        "--footprints", choices=["osm", "microsoft", "baltimore"], default="baltimore",
-        help="Building footprint source (baltimore = data/Buildings_Footprint.geojson)"
-    )
-    parser.add_argument(
-        "--laz-dir", type=Path, default=None,
-        help="Path to pre-downloaded LAZ directory (skips download)"
+        "--force", action="store_true",
+        help="Re-download DSM even if cached"
     )
     args = parser.parse_args()
 
     LAZ_CACHE.mkdir(parents=True, exist_ok=True)
-
-    if args.mode == "full":
-        run_full(laz_dir=args.laz_dir, footprint_source=args.footprints)
-    else:
-        run_quick(footprint_source=args.footprints)
+    run(footprint_source=args.footprints, force_download=args.force)
 
     print(f"\n  Next: restart `npm run dev` — app loads {OUT_FILE.name} automatically\n")
