@@ -517,8 +517,8 @@ def compute_zonal_heights(footprints_gdf, dsm_path: Path, dtm_path: Path) -> lis
             raster_crs = src.crs.to_string()
         geom_proj = footprints_gdf.to_crs(raster_crs).geometry
 
-        stats = zonal_stats(geom_proj, str(ndsm_path), stats=["max"], nodata=-9999, all_touched=True)
-        heights = [max(0.0, s["max"] or 0) if s.get("max") is not None else 0.0 for s in stats]
+        stats = zonal_stats(geom_proj, str(ndsm_path), stats=["percentile_90", "max"], nodata=-9999, all_touched=True)
+        heights = [max(0.0, s.get("percentile_90") or 0) if s.get("percentile_90") is not None else 0.0 for s in stats]
         n_lidar = sum(h > 1 for h in heights)
         print(f"  → LiDAR heights: {n_lidar}/{len(heights)} buildings")
         return heights
@@ -614,7 +614,7 @@ def export_geojson(gdf, out_path: Path):
         if row.geometry is None or row.geometry.is_empty:
             continue
         h = float(row.get("height_m", 0) or 0)
-        h = max(2.0, min(h, 300.0)) if h > 0 else 0.0
+        h = max(2.0, min(h, 170.0)) if h > 0 else 0.0
         features.append({
             "type": "Feature",
             "geometry": row.geometry.__geo_interface__,
