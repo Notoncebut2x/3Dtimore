@@ -88,6 +88,8 @@ def fetch_osm_footprints(bbox: tuple) -> dict:
 (
   way["building"]({s},{w},{n},{e});
   relation["building"]["type"="multipolygon"]({s},{w},{n},{e});
+  way["leisure"="stadium"]({s},{w},{n},{e});
+  relation["leisure"="stadium"]["type"="multipolygon"]({s},{w},{n},{e});
 );
 out body;
 >;
@@ -101,7 +103,8 @@ out skel qt;
     nodes = {el["id"]: (el["lon"], el["lat"]) for el in osm["elements"] if el["type"] == "node"}
     features = []
     for el in osm["elements"]:
-        if el["type"] != "way" or "building" not in el.get("tags", {}):
+        tags = el.get("tags", {})
+        if el["type"] != "way" or ("building" not in tags and tags.get("leisure") != "stadium"):
             continue
         try:
             coords = [nodes[nid] for nid in el["nodes"]]
@@ -109,7 +112,6 @@ out skel qt;
                 coords.append(coords[0])
             if len(coords) < 4:
                 continue
-            tags = el.get("tags", {})
             height_tag  = float(tags.get("height", 0) or 0)
             levels_tag  = float(tags.get("building:levels", 0) or 0)
             features.append({
